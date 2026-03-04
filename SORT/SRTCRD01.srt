@@ -1,0 +1,15 @@
+*-----------------------------------------------------------------*
+* SORT CONTROL: SRTCRD01                                           *
+* DESCRIPTION: SORT CARD TRANSACTIONS BY CARD NUMBER AND DATE      *
+* USED BY: PICRD10J                                                 *
+*-----------------------------------------------------------------*
+  SORT FIELDS=(1,16,CH,A,       * CARD NUMBER
+               17,10,CH,A)      * TRANSACTION DATE
+
+  INCLUDE COND=(27,2,CH,EQ,C'PU',  * PURCHASE
+           OR,27,2,CH,EQ,C'AW',     * ATM WITHDRAWAL
+           OR,27,2,CH,EQ,C'RF')     * REFUND
+
+  OUTREC FIELDS=(1,250)
+
+  OPTION DYNALLOC,FILSZ=E100000

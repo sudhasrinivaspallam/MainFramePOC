@@ -1,0 +1,42 @@
+*=================================================================*
+*  TEST CASE: TC_STL_001                                           *
+*  SYSTEM:    SETTLEMENT                                           *
+*  MODULE:    STLMT100 - DAILY SETTLEMENT EXTRACT                  *
+*=================================================================*
+*
+*  OBJECTIVE:
+*  Verify daily settlement extract processing. Network files
+*  (VISA, MC, STAR) are merged, validated, and loaded into
+*  VSAM KSDS for downstream matching and reconciliation.
+*
+*  PRE-CONDITIONS:
+*  1. VSAM cluster SETTLE.DAILY.TRANS is defined (or will be
+*     redefined by IDCAMS step in JCL)
+*  2. Network input files contain 15 test transactions
+*  3. STLMT10J JCL is configured with correct DD statements
+*  4. No residual data in VSAM clusters
+*
+*  TEST STEPS:
+*  1. Verify VSAM cluster is empty or will be redefined
+*  2. Submit JCL job STLMT10J
+*  3. Verify VSAM00 step (IDCAMS DELETE/DEFINE) RC=0 or RC=8
+*  4. Verify SORT00 step (network file merge) RC=0
+*  5. Verify MAIN step (STLMT100) RC=0
+*  6. Verify BACKUP step (REPRO) RC=0
+*  7. Check report output for expected counts
+*  8. Use IDCAMS PRINT to verify VSAM content
+*
+*  EXPECTED RESULTS:
+*  - Job STLMT10J ends with CC=0000
+*  - 15 records loaded into VSAM successfully
+*  - VSAM record count = 15
+*  - Network distribution: VISA=6, MC=5, STAR=4
+*  - Backup dataset contains 15 records
+*  - Report totals match expected values
+*
+*  VALIDATION:
+*  IDCAMS PRINT INFILE(VSAMFIL) COUNT(15)
+*  IDCAMS LISTCAT ENT('SETTLE.DAILY.TRANS') ALL
+*  (Verify REC-TOTAL = 15)
+*
+*=================================================================*

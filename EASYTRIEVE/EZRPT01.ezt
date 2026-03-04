@@ -1,0 +1,43 @@
+*-----------------------------------------------------------------*
+* EASYTRIEVE PROGRAM: EZRPT01                                      *
+* DESCRIPTION: CARD ACTIVITY REPORT - PI SYSTEM                    *
+* INPUT: CARD MASTER AND TRANSACTION DB2 EXTRACT FILES             *
+* OUTPUT: FORMATTED CARD ACTIVITY REPORT                            *
+*-----------------------------------------------------------------*
+FILE FILEIN FB(350 0)
+  CARD-NUMBER    1   16  A
+  ACCOUNT-NUM   17   12  A
+  CUSTOMER-ID   29   10  A
+  FIRST-NAME    39   25  A
+  LAST-NAME     64   25  A
+  CARD-STATUS   89    2  A
+  ISSUE-DATE    91   10  A
+  EXPIRY-DATE  101   10  A
+  TXN-COUNT    111    9  N
+  TXN-TOTAL    120   11  N 2
+
+FILE RPTOUT PRINTER
+
+JOB INPUT FILEIN NAME CARD-ACTIVITY-RPT
+
+  PRINT REPORT1
+
+REPORT REPORT1 LINESIZE 132 PAGESIZE 60 SUMCTL NONE +
+  TITLE 1  'PLASTIC ISSUANCE - CARD ACTIVITY REPORT' +
+  TITLE 2  '========================================' +
+  TITLE 3  'RUN DATE: ' &DATE
+
+  SEQUENCE CARD-STATUS ACCOUNT-NUM
+
+  CONTROL CARD-STATUS
+
+  LINE 1 CARD-NUMBER ACCOUNT-NUM +
+         FIRST-NAME LAST-NAME +
+         CARD-STATUS ISSUE-DATE EXPIRY-DATE +
+         TXN-COUNT TXN-TOTAL
+
+  LINE 2
+
+  SUM TXN-COUNT TXN-TOTAL
+
+END

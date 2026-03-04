@@ -1,0 +1,87 @@
+//*****************************************************************
+//* VSAM CLUSTER DEFINITIONS FOR SETTLEMENT SYSTEM                 *
+//* AMS: DEFCLS01                                                   *
+//*****************************************************************
+
+//* ============================================================== *
+//* SETTLEMENT DAILY TRANSACTION FILE (KSDS)                        *
+//* KEY: SETTLE-ID (20 BYTES AT OFFSET 0)                           *
+//* RECORD SIZE: 250                                                *
+//* ============================================================== *
+
+  DELETE SETTLE.DAILY.TRANS -
+         CLUSTER -
+         PURGE
+
+  SET MAXCC = 0
+
+  DEFINE CLUSTER -
+    (NAME(SETTLE.DAILY.TRANS)       -
+     INDEXED                        -
+     RECORDS(100000 25000)          -
+     RECORDSIZE(250 250)            -
+     KEYS(20 0)                     -
+     FREESPACE(20 10)               -
+     SPEED                          -
+     SHAREOPTIONS(2 3)              -
+     ERASE)                         -
+    DATA                            -
+    (NAME(SETTLE.DAILY.TRANS.DATA)  -
+     CISZ(8192)                     -
+     CONTROLINTERVALSIZE(8192))     -
+    INDEX                           -
+    (NAME(SETTLE.DAILY.TRANS.INDEX) -
+     CONTROLINTERVALSIZE(4096))
+
+//* ============================================================== *
+//* SETTLEMENT DAILY SUMMARY FILE (KSDS)                            *
+//* KEY: SETTLE-DATE + NETWORK-ID (14 BYTES AT OFFSET 0)            *
+//* RECORD SIZE: 214                                                *
+//* ============================================================== *
+
+  DELETE SETTLE.DAILY.SUMMARY -
+         CLUSTER -
+         PURGE
+
+  SET MAXCC = 0
+
+  DEFINE CLUSTER -
+    (NAME(SETTLE.DAILY.SUMMARY)       -
+     INDEXED                          -
+     RECORDS(500 100)                 -
+     RECORDSIZE(214 214)              -
+     KEYS(14 0)                       -
+     FREESPACE(20 10)                 -
+     SPEED                            -
+     SHAREOPTIONS(2 3))               -
+    DATA                              -
+    (NAME(SETTLE.DAILY.SUMMARY.DATA)  -
+     CISZ(4096))                      -
+    INDEX                             -
+    (NAME(SETTLE.DAILY.SUMMARY.INDEX))
+
+//* ============================================================== *
+//* SETTLEMENT HISTORICAL ARCHIVE (KSDS)                            *
+//* KEY: SETTLE-DATE + SETTLE-ID (30 BYTES AT OFFSET 0)             *
+//* ============================================================== *
+
+  DELETE SETTLE.HISTORY.ARCHIVE -
+         CLUSTER -
+         PURGE
+
+  SET MAXCC = 0
+
+  DEFINE CLUSTER -
+    (NAME(SETTLE.HISTORY.ARCHIVE)       -
+     INDEXED                            -
+     RECORDS(1000000 200000)            -
+     RECORDSIZE(250 250)                -
+     KEYS(30 0)                         -
+     FREESPACE(15 5)                    -
+     SPEED                              -
+     SHAREOPTIONS(1 3))                 -
+    DATA                                -
+    (NAME(SETTLE.HISTORY.ARCHIVE.DATA)  -
+     CISZ(16384))                       -
+    INDEX                               -
+    (NAME(SETTLE.HISTORY.ARCHIVE.INDEX))

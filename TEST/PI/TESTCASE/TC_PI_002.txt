@@ -1,0 +1,43 @@
+*=================================================================*
+*  TEST CASE: TC_PI_002                                            *
+*  SYSTEM:    PLASTIC ISSUANCE (PI)                                *
+*  MODULE:    PICRD200 - CARD ACTIVATION                           *
+*=================================================================*
+*
+*  OBJECTIVE:
+*  Verify card activation processing. Cards with STATUS='NW'
+*  are activated to STATUS='AC' with PIN offset generation.
+*
+*  PRE-CONDITIONS:
+*  1. TC_PI_001 has been executed successfully
+*  2. 10 cards exist in TB_CARD_MASTER with STATUS='NW'
+*  3. Activation request file contains valid card numbers
+*  4. PICRD20J JCL is configured correctly
+*
+*  TEST STEPS:
+*  1. Prepare activation input with 8 of 10 card numbers
+*  2. Submit JCL job PICRD20J
+*  3. Verify MAIN step (PICRD200) completes with RC=0
+*  4. Check report output for activation counts
+*  5. Query DB2 to confirm status changes
+*
+*  EXPECTED RESULTS:
+*  - Job PICRD20J ends with CC=0000
+*  - 8 records activated successfully
+*  - 2 records remain with STATUS='NW' (not in input)
+*  - Each activated card has a valid PIN offset
+*  - Report shows: Activated=8, Skipped=0, Errors=0
+*
+*  NEGATIVE TEST CASES:
+*  1. Include already-active card number (expect skip)
+*  2. Include non-existent card number (expect error record)
+*  3. Include blocked card (expect rejection)
+*
+*  VALIDATION SQL:
+*  SELECT CARD_STATUS, COUNT(*)
+*    FROM PAYSCHM.TB_CARD_MASTER
+*   WHERE ISSUE_DATE = CURRENT DATE
+*   GROUP BY CARD_STATUS;
+*  (EXPECTED: NW=2, AC=8)
+*
+*=================================================================*

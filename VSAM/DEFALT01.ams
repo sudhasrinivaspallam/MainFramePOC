@@ -1,0 +1,69 @@
+//*****************************************************************
+//* VSAM ALTERNATE INDEX DEFINITIONS                               *
+//* AMS: DEFALT01                                                   *
+//*****************************************************************
+
+//* ============================================================== *
+//* ALTERNATE INDEX ON SETTLEMENT BY CARD NUMBER                    *
+//* ALLOWS LOOKUP OF SETTLEMENT TRANSACTIONS BY CARD               *
+//* ============================================================== *
+
+  DELETE SETTLE.DAILY.TRANS.AIX1 -
+         ALTERNATEINDEX -
+         PURGE
+
+  SET MAXCC = 0
+
+  DEFINE ALTERNATEINDEX -
+    (NAME(SETTLE.DAILY.TRANS.AIX1)    -
+     RELATE(SETTLE.DAILY.TRANS)       -
+     KEYS(16 40)                      -
+     NONUNIQUEKEY                     -
+     RECORDS(100000 25000)            -
+     UPGRADE                          -
+     SHAREOPTIONS(2 3))               -
+    DATA                              -
+    (NAME(SETTLE.DAILY.TRANS.AIX1.DATA))  -
+    INDEX                             -
+    (NAME(SETTLE.DAILY.TRANS.AIX1.INDEX))
+
+  DEFINE PATH -
+    (NAME(SETTLE.DAILY.TRANS.PATH1)   -
+     PATHENTRY(SETTLE.DAILY.TRANS.AIX1) -
+     UPDATE)
+
+  BLDINDEX -
+    INDATASET(SETTLE.DAILY.TRANS) -
+    OUTDATASET(SETTLE.DAILY.TRANS.AIX1)
+
+//* ============================================================== *
+//* ALTERNATE INDEX ON SETTLEMENT BY NETWORK ID                     *
+//* ============================================================== *
+
+  DELETE SETTLE.DAILY.TRANS.AIX2 -
+         ALTERNATEINDEX -
+         PURGE
+
+  SET MAXCC = 0
+
+  DEFINE ALTERNATEINDEX -
+    (NAME(SETTLE.DAILY.TRANS.AIX2)    -
+     RELATE(SETTLE.DAILY.TRANS)       -
+     KEYS(4 112)                      -
+     NONUNIQUEKEY                     -
+     RECORDS(100000 25000)            -
+     UPGRADE                          -
+     SHAREOPTIONS(2 3))               -
+    DATA                              -
+    (NAME(SETTLE.DAILY.TRANS.AIX2.DATA))  -
+    INDEX                             -
+    (NAME(SETTLE.DAILY.TRANS.AIX2.INDEX))
+
+  DEFINE PATH -
+    (NAME(SETTLE.DAILY.TRANS.PATH2)   -
+     PATHENTRY(SETTLE.DAILY.TRANS.AIX2) -
+     UPDATE)
+
+  BLDINDEX -
+    INDATASET(SETTLE.DAILY.TRANS) -
+    OUTDATASET(SETTLE.DAILY.TRANS.AIX2)

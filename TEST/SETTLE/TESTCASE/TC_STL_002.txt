@@ -1,0 +1,42 @@
+*=================================================================*
+*  TEST CASE: TC_STL_002                                           *
+*  SYSTEM:    SETTLEMENT                                           *
+*  MODULE:    STLMT200 - TRANSACTION MATCHING                      *
+*=================================================================*
+*
+*  OBJECTIVE:
+*  Verify settlement-to-acquirer transaction matching logic.
+*  Both files sorted by TXN-ID, sequential match produces
+*  matched, unmatched-settlement, and unmatched-acquirer records.
+*
+*  PRE-CONDITIONS:
+*  1. TC_STL_001 has been executed successfully
+*  2. VSAM cluster SETTLE.DAILY.TRANS has 15 records
+*  3. Acquirer file (ACQ input) ready with matching data
+*  4. STLMT20J JCL SORT step configured for acquirer sort
+*
+*  TEST STEPS:
+*  1. Prepare acquirer test file with 13 transactions
+*     (12 matching + 1 extra not in settlement)
+*  2. Submit JCL job STLMT20J
+*  3. Verify SORT00 step (acquirer sort) RC=0
+*  4. Verify MAIN step (STLMT200) RC=0
+*  5. Check matched output file
+*  6. Check unmatched-settlement output
+*  7. Check unmatched-acquirer output
+*  8. Verify totals in report
+*
+*  EXPECTED RESULTS:
+*  - Job STLMT20J ends with CC=0000
+*  - Matched records: 12
+*  - Unmatched settlement records: 3 (in STL but not ACQ)
+*  - Unmatched acquirer records: 1 (in ACQ but not STL)
+*  - Amount mismatches: 0 (all matched amounts agree)
+*  - Match rate: 80.00%
+*
+*  NEGATIVE TEST SCENARIOS:
+*  1. Amount mismatch between STL and ACQ for same TXN-ID
+*  2. Duplicate TXN-ID in acquirer file
+*  3. Empty acquirer file (expect all unmatched-settlement)
+*
+*=================================================================*

@@ -1,0 +1,25 @@
+*=================================================================*
+*  SETTLEMENT - EXPECTED OUTPUT                                    *
+*  TEST CASE: TC_STL_001 - DAILY EXTRACT & MATCHING                *
+*=================================================================*
+*  EXPECTED RECORD COUNTS:                                         *
+*   TOTAL INPUT RECORDS:      15                                   *
+*   VALID RECORDS:            15                                   *
+*   REJECTED RECORDS:          0                                   *
+*                                                                   *
+*  EXPECTED BY NETWORK:                                            *
+*   VISA:  6 TRANSACTIONS  TOTAL: $58,500.00                       *
+*   MC:    5 TRANSACTIONS  TOTAL: $38,000.00                       *
+*   STAR:  4 TRANSACTIONS  TOTAL: $13,000.00                       *
+*                                                                   *
+*  EXPECTED BY STATUS:                                             *
+*   SETTLED (ST):     11                                           *
+*   PENDING (PE):      4                                           *
+*                                                                   *
+*  EXPECTED MATCHING RESULTS:                                      *
+*   MATCHED:          12                                           *
+*   UNMATCHED-STL:     2                                           *
+*   UNMATCHED-ACQ:     1                                           *
+*                                                                   *
+*  EXPECTED RETURN CODE:  0000                                     *
+*=================================================================*

@@ -1,0 +1,46 @@
+*=================================================================*
+*  TEST CASE: TC_PI_001                                            *
+*  SYSTEM:    PLASTIC ISSUANCE (PI)                                *
+*  MODULE:    PICRD100 - CARD ISSUANCE                             *
+*=================================================================*
+*
+*  OBJECTIVE:
+*  Verify standard debit and prepaid card issuance processing.
+*  Cards are read from input file, validated, assigned card
+*  numbers via Luhn algorithm, and inserted into DB2.
+*
+*  PRE-CONDITIONS:
+*  1. DB2 table TB_CARD_MASTER is available and accepting inserts
+*  2. Input file PI_CARD_INPUT.dat contains 10 valid records
+*  3. Card number sequence starts from configured range
+*  4. PICRD10J JCL is configured with correct DD statements
+*
+*  TEST STEPS:
+*  1. Submit JCL job PICRD10J
+*  2. Verify SORT step completes with RC=0
+*  3. Verify MAIN step (PICRD100) completes with RC=0
+*  4. Verify NOTIFY step completes with RC=0
+*  5. Check report output for expected counts
+*  6. Query DB2 to confirm 10 new rows in TB_CARD_MASTER
+*
+*  EXPECTED RESULTS:
+*  - Job PICRD10J ends with CC=0000
+*  - 10 records processed successfully
+*  - 0 records rejected
+*  - All cards assigned unique 16-digit numbers
+*  - All cards have STATUS='NW'
+*  - DB2 COMMIT was successful
+*  - Report shows correct summary totals
+*
+*  POST-CONDITIONS:
+*  1. 10 new rows exist in TB_CARD_MASTER with STATUS='NW'
+*  2. Report dataset contains header, detail, and trailer records
+*  3. No error messages in SYSOUT
+*
+*  VALIDATION SQL:
+*  SELECT COUNT(*) FROM PAYSCHM.TB_CARD_MASTER
+*   WHERE CARD_STATUS = 'NW'
+*     AND ISSUE_DATE = CURRENT DATE;
+*  (EXPECTED COUNT = 10)
+*
+*=================================================================*

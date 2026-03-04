@@ -1,0 +1,15 @@
+*-----------------------------------------------------------------*
+* SORT CONTROL: SRTSTL01                                           *
+* DESCRIPTION: SORT SETTLEMENT RECORDS BY TRANSACTION ID           *
+*              MERGE MULTIPLE NETWORK FILES                         *
+* USED BY: STLMT10J, STLMT20J                                      *
+*-----------------------------------------------------------------*
+  SORT FIELDS=(1,20,CH,A)      * TRANSACTION ID
+
+  INCLUDE COND=(21,16,CH,NE,C'                ')  * NON-BLANK CARD
+
+  SUM FIELDS=NONE              * REMOVE DUPLICATES
+
+  OUTREC FIELDS=(1,250)
+
+  OPTION DYNALLOC,FILSZ=E500000

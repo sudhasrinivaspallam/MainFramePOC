@@ -1,0 +1,51 @@
+//STLMT40J JOB (ACCT),'STL FINAL REPORTS',
+//         CLASS=A,MSGCLASS=X,MSGLEVEL=(1,1),
+//         NOTIFY=&SYSUID,REGION=0M,TIME=0030
+//*
+//*****************************************************************
+//* JOB: STLMT40J                                                  *
+//* DESC: SETTLEMENT - MANAGEMENT REPORT AND SAS FEED              *
+//* FREQ: DAILY - CA7 SCHEDULED AFTER STLMT30J                    *
+//* DEPENDS: STLMT30J (SUCCESSFUL)                                 *
+//* PROGRAMS: STLMT400 (COBOL/VSAM), EZRPT02 (EASYTRIEVE)        *
+//*****************************************************************
+//*
+//*------- STEP 01: GENERATE MANAGEMENT REPORT --------------------
+//*
+//STEP010  EXEC PGM=STLMT400
+//STEPLIB  DD DSN=SETTLE.PROD.LOADLIB,DISP=SHR
+//SUMVSAM  DD DSN=SETTLE.DAILY.SUMMARY,
+//            DISP=SHR
+//MGTRPT   DD SYSOUT=*,
+//            DCB=(RECFM=FA,LRECL=133,BLKSIZE=0)
+//SASOUT   DD DSN=SETTLE.DAILY.SAS.FEED(&DATE.),
+//            DISP=(NEW,CATLG,DELETE),
+//            SPACE=(CYL,(5,2),RLSE),
+//            DCB=(RECFM=FB,LRECL=200,BLKSIZE=0)
+//SYSOUT   DD SYSOUT=*
+//SYSUDUMP DD SYSOUT=*
+//*
+//*------- STEP 02: EASYTRIEVE SETTLEMENT SUMMARY REPORT ----------
+//*
+//STEP020  EXEC PGM=EZTPA00,COND=(4,LT)
+//STEPLIB  DD DSN=EASYTRIEVE.PROD.LOADLIB,DISP=SHR
+//FILEIN   DD DSN=SETTLE.DAILY.MATCHED(&DATE.),
+//            DISP=SHR
+//RPTOUT   DD SYSOUT=*,
+//            DCB=(RECFM=FA,LRECL=133,BLKSIZE=0)
+//SYSIN    DD DSN=SETTLE.PROD.EZTLIB(EZRPT02),
+//            DISP=SHR
+//SYSPRINT DD SYSOUT=*
+//*
+//*------- STEP 03: ARCHIVE DAILY FILES ---------------------------
+//*
+//STEP030  EXEC PGM=IEBGENER,COND=(4,LT)
+//SYSPRINT DD SYSOUT=*
+//SYSUT1   DD DSN=SETTLE.DAILY.MATCHED(&DATE.),
+//            DISP=SHR
+//SYSUT2   DD DSN=SETTLE.ARCHIVE.MATCHED(&DATE.),
+//            DISP=(NEW,CATLG,DELETE),
+//            SPACE=(CYL,(50,20),RLSE),
+//            DCB=(RECFM=FB,LRECL=300,BLKSIZE=0)
+//SYSIN    DD DUMMY
+//

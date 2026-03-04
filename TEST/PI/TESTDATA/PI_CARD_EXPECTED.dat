@@ -1,0 +1,19 @@
+*=================================================================*
+*  PI CARD ISSUANCE - EXPECTED OUTPUT                              *
+*  TEST CASE: TC_PI_001 - STANDARD CARD ISSUANCE                  *
+*=================================================================*
+*  EXPECTED: 10 CARDS SUCCESSFULLY ISSUED                          *
+*  EXPECTED: 8 DEBIT CARDS (DB), 3 PREPAID CARDS (PP)             *
+*  EXPECTED: ALL STATUS = 'NW' (NEW)                               *
+*  EXPECTED: RETURN CODE = 0000                                    *
+*  EXPECTED: RECORDS READ    = 0000000010                          *
+*  EXPECTED: RECORDS WRITTEN = 0000000010                          *
+*  EXPECTED: RECORDS REJECTED= 0000000000                          *
+*-----------------------------------------------------------------*
+*  REPORT TRAILER SHOULD SHOW:                                     *
+*   TOTAL CARDS ISSUED:           10                               *
+*   DEBIT CARDS:                   7                               *
+*   PREPAID CARDS:                 3                               *
+*   DAILY LIMIT TOTAL:   $360,000.00                               *
+*   ERRORS:                        0                               *
+*=================================================================*

@@ -1,0 +1,48 @@
+*-----------------------------------------------------------------*
+* EASYTRIEVE PROGRAM: EZRPT02                                      *
+* DESCRIPTION: SETTLEMENT SUMMARY REPORT                            *
+* INPUT: DAILY MATCHED SETTLEMENT TRANSACTIONS                     *
+* OUTPUT: FORMATTED SETTLEMENT SUMMARY BY NETWORK                   *
+*-----------------------------------------------------------------*
+FILE FILEIN FB(300 0)
+  MATCH-STATUS   1   10  A
+  SETTLE-ID     11   20  A
+  TXN-ID        31   20  A
+  CARD-NUMBER   51   16  A
+  TXN-AMOUNT    67    8  P 2
+  NETWORK-ID    75    4  A
+  AUTH-CODE     79    6  A
+
+FILE RPTOUT PRINTER
+
+JOB INPUT FILEIN NAME SETTLE-SUMMARY-RPT
+
+  IF MATCH-STATUS = 'MATCHED  '
+    PRINT REPORT1
+  END-IF
+
+REPORT REPORT1 LINESIZE 132 PAGESIZE 60 SUMCTL FINAL +
+  TITLE 1  'DAILY SETTLEMENT SUMMARY REPORT' +
+  TITLE 2  '===============================' +
+  TITLE 3  'RUN DATE: ' &DATE
+
+  SEQUENCE NETWORK-ID TXN-ID
+
+  CONTROL NETWORK-ID FINAL
+
+  LINE 1 NETWORK-ID SETTLE-ID TXN-ID +
+         CARD-NUMBER TXN-AMOUNT AUTH-CODE
+
+  LINE 2
+
+  SUM TXN-AMOUNT
+  COUNT
+
+  BEFORE-BREAK
+    DISPLAY ' '
+    DISPLAY 'NETWORK: ' NETWORK-ID +
+            '  TOTAL TRANSACTIONS: ' COUNT +
+            '  TOTAL AMOUNT: ' TALLY TXN-AMOUNT
+  END-BEFORE
+
+END

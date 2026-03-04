@@ -1,0 +1,87 @@
+***********************************************************************
+* BMS MAP: PISCR01 - CARD INQUIRY SCREEN                              *
+* MAPSET: PIMAPS                                                       *
+* TRANSACTION: PI01 (PIONL100)                                         *
+***********************************************************************
+PIMAPS   DFHMSD TYPE=&SYSPARM,                                        X
+               LANG=COBOL,                                             X
+               MODE=INOUT,                                             X
+               CTRL=FREEKB,                                            X
+               STORAGE=AUTO,                                           X
+               TIOAPFX=YES
+*
+PISCR01  DFHMDI SIZE=(24,80),                                         X
+               LINE=1,                                                 X
+               COLUMN=1
+*
+         DFHMDF POS=(1,1),LENGTH=40,                                   X
+               ATTRB=(ASKIP,BRT),                                      X
+               INITIAL='PLASTIC ISSUANCE - CARD INQUIRY'
+         DFHMDF POS=(1,60),LENGTH=19,                                  X
+               ATTRB=(ASKIP),                                          X
+               INITIAL='TRANSACTION: PI01'
+*
+         DFHMDF POS=(3,1),LENGTH=14,                                   X
+               ATTRB=(ASKIP),                                          X
+               INITIAL='CARD NUMBER: '
+CARDNO   DFHMDF POS=(3,16),LENGTH=16,                                 X
+               ATTRB=(UNPROT,BRT,IC)
+         DFHMDF POS=(3,33),LENGTH=1,ATTRB=(ASKIP)
+*
+         DFHMDF POS=(5,1),LENGTH=14,                                   X
+               ATTRB=(ASKIP),                                          X
+               INITIAL='CUSTOMER ID: '
+CUSTID   DFHMDF POS=(5,16),LENGTH=10,                                 X
+               ATTRB=(PROT)
+*
+         DFHMDF POS=(6,1),LENGTH=14,                                   X
+               ATTRB=(ASKIP),                                          X
+               INITIAL='CUST NAME:   '
+CUSTNAM  DFHMDF POS=(6,16),LENGTH=50,                                 X
+               ATTRB=(PROT)
+*
+         DFHMDF POS=(8,1),LENGTH=14,                                   X
+               ATTRB=(ASKIP),                                          X
+               INITIAL='CARD TYPE:   '
+CARDTYP  DFHMDF POS=(8,16),LENGTH=15,                                 X
+               ATTRB=(PROT)
+*
+         DFHMDF POS=(9,1),LENGTH=14,                                   X
+               ATTRB=(ASKIP),                                          X
+               INITIAL='CARD STATUS: '
+CARDSTS  DFHMDF POS=(9,16),LENGTH=15,                                 X
+               ATTRB=(PROT)
+*
+         DFHMDF POS=(11,1),LENGTH=14,                                  X
+               ATTRB=(ASKIP),                                          X
+               INITIAL='ISSUE DATE:  '
+ISSUDT   DFHMDF POS=(11,16),LENGTH=10,                                X
+               ATTRB=(PROT)
+*
+         DFHMDF POS=(12,1),LENGTH=14,                                  X
+               ATTRB=(ASKIP),                                          X
+               INITIAL='EXPIRY DATE: '
+EXPDT    DFHMDF POS=(12,16),LENGTH=10,                                X
+               ATTRB=(PROT)
+*
+         DFHMDF POS=(14,1),LENGTH=14,                                  X
+               ATTRB=(ASKIP),                                          X
+               INITIAL='BALANCE:     '
+BALANC   DFHMDF POS=(14,16),LENGTH=15,                                X
+               ATTRB=(PROT)
+*
+         DFHMDF POS=(15,1),LENGTH=14,                                  X
+               ATTRB=(ASKIP),                                          X
+               INITIAL='DAILY LIMIT: '
+DAYLMT   DFHMDF POS=(15,16),LENGTH=15,                                X
+               ATTRB=(PROT)
+*
+         DFHMDF POS=(22,1),LENGTH=60,                                  X
+               ATTRB=(ASKIP),                                          X
+               INITIAL='PF3=EXIT  ENTER=INQUIRY'
+*
+MSG      DFHMDF POS=(24,1),LENGTH=60,                                  X
+               ATTRB=(ASKIP,BRT)
+*
+         DFHMSD TYPE=FINAL
+         END

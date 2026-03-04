@@ -1,0 +1,54 @@
+//*****************************************************************
+//* VSAM REPRO UTILITY - LOAD/UNLOAD                               *
+//* AMS: REPRO01                                                    *
+//*****************************************************************
+
+//* ============================================================== *
+//* REPRO: LOAD SETTLEMENT VSAM FROM SEQUENTIAL FILE               *
+//* ============================================================== *
+
+  REPRO -
+    INFILE(SEQINP) -
+    OUTFILE(VSAMOUT) -
+    COUNT(999999) -
+    REPLACE
+
+//* ============================================================== *
+//* REPRO: UNLOAD VSAM TO SEQUENTIAL FOR BACKUP                    *
+//* ============================================================== *
+
+  REPRO -
+    INFILE(VSAMIN) -
+    OUTFILE(SEQOUT) -
+    COUNT(999999)
+
+//* ============================================================== *
+//* LISTCAT: LIST VSAM CLUSTER DETAILS                              *
+//* ============================================================== *
+
+  LISTCAT -
+    ENTRIES(SETTLE.DAILY.TRANS) -
+    ALL
+
+  LISTCAT -
+    ENTRIES(SETTLE.DAILY.SUMMARY) -
+    ALL
+
+//* ============================================================== *
+//* PRINT: PRINT FIRST 50 RECORDS OF VSAM FILE                     *
+//* ============================================================== *
+
+  PRINT -
+    INFILE(VSAMIN) -
+    CHARACTER -
+    COUNT(50)
+
+//* ============================================================== *
+//* VERIFY: VERIFY VSAM FILE INTEGRITY                              *
+//* ============================================================== *
+
+  VERIFY -
+    DATASET(SETTLE.DAILY.TRANS)
+
+  VERIFY -
+    DATASET(SETTLE.DAILY.SUMMARY)

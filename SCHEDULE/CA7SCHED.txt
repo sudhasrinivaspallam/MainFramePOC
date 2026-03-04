@@ -1,0 +1,169 @@
+*=================================================================*
+*  CA7 SCHEDULE DEFINITION                                         *
+*  SYSTEM: PAYMENTS - PLASTIC ISSUANCE & SETTLEMENT                *
+*  SCHEDULE: DAILY BATCH CYCLES                                    *
+*=================================================================*
+
+*-----------------------------------------------------------------*
+*  PI (PLASTIC ISSUANCE) DAILY CYCLE                               *
+*  RUN SCHEDULE: MONDAY - FRIDAY                                   *
+*  START TIME: 18:00 (AFTER ONLINE WINDOW CLOSES)                  *
+*-----------------------------------------------------------------*
+
+DJOB     PICRD10J
+  SCHID  001
+  DOTRIG RUN
+  SCHDDAYS(1,2,3,4,5)
+  LEADTM 0015
+  DEADLN 2200
+  RESOLVE CALENDAR(BANKDAYS)
+
+DJOB     PICRD20J
+  SCHID  001
+  DOTRIG RUN
+  SCHDDAYS(1,2,3,4,5)
+  LEADTM 0015
+  DEADLN 2200
+  RESOLVE CALENDAR(BANKDAYS)
+
+DJOB     PICRD30J
+  SCHID  001
+  DOTRIG RUN
+  SCHDDAYS(1,2,3,4,5)
+  LEADTM 0015
+  DEADLN 2200
+  RESOLVE CALENDAR(BANKDAYS)
+
+DJOB     PICRD40J
+  SCHID  001
+  DOTRIG RUN
+  SCHDDAYS(1,2,3,4,5)
+  LEADTM 0015
+  DEADLN 2300
+  RESOLVE CALENDAR(BANKDAYS)
+
+*-----------------------------------------------------------------*
+*  PI JOB DEPENDENCY CHAIN                                         *
+*  PICRD10J -> PICRD20J -> PICRD30J -> PICRD40J                    *
+*-----------------------------------------------------------------*
+
+DTRG     PICRD20J
+  TJOB     PICRD10J
+  STATUS   ENDED-OK
+
+DTRG     PICRD30J
+  TJOB     PICRD20J
+  STATUS   ENDED-OK
+
+DTRG     PICRD40J
+  TJOB     PICRD30J
+  STATUS   ENDED-OK
+
+*-----------------------------------------------------------------*
+*  SETTLEMENT DAILY CYCLE                                          *
+*  RUN SCHEDULE: MONDAY - FRIDAY                                   *
+*  START TIME: 20:00 (AFTER NETWORK CUTOFF)                        *
+*-----------------------------------------------------------------*
+
+DJOB     STLMT10J
+  SCHID  002
+  DOTRIG RUN
+  SCHDDAYS(1,2,3,4,5)
+  LEADTM 0015
+  DEADLN 2359
+  RESOLVE CALENDAR(BANKDAYS)
+
+DJOB     STLMT20J
+  SCHID  002
+  DOTRIG RUN
+  SCHDDAYS(1,2,3,4,5)
+  LEADTM 0015
+  DEADLN 2359
+  RESOLVE CALENDAR(BANKDAYS)
+
+DJOB     STLMT30J
+  SCHID  002
+  DOTRIG RUN
+  SCHDDAYS(1,2,3,4,5)
+  LEADTM 0015
+  DEADLN 0200
+  RESOLVE CALENDAR(BANKDAYS)
+
+DJOB     STLMT40J
+  SCHID  002
+  DOTRIG RUN
+  SCHDDAYS(1,2,3,4,5)
+  LEADTM 0015
+  DEADLN 0300
+  RESOLVE CALENDAR(BANKDAYS)
+
+*-----------------------------------------------------------------*
+*  SETTLEMENT JOB DEPENDENCY CHAIN                                 *
+*  STLMT10J -> STLMT20J -> STLMT30J -> STLMT40J                   *
+*-----------------------------------------------------------------*
+
+DTRG     STLMT20J
+  TJOB     STLMT10J
+  STATUS   ENDED-OK
+
+DTRG     STLMT30J
+  TJOB     STLMT20J
+  STATUS   ENDED-OK
+
+DTRG     STLMT40J
+  TJOB     STLMT30J
+  STATUS   ENDED-OK
+
+*-----------------------------------------------------------------*
+*  CROSS-SYSTEM DEPENDENCIES (OPTIONAL TRIGGER)                    *
+*  SETTLEMENT STARTS AFTER PI CYCLE COMPLETES                      *
+*-----------------------------------------------------------------*
+
+DTRG     STLMT10J
+  TJOB     PICRD40J
+  STATUS   ENDED-OK
+
+*-----------------------------------------------------------------*
+*  DATASET TRIGGERS                                                *
+*  SETTLEMENT EXTRACT REQUIRES NETWORK FILES                       *
+*-----------------------------------------------------------------*
+
+DTRG     STLMT10J
+  DSNAME   SETTLE.NETWORK.VISA.DAILY
+  STATUS   CREATED
+
+DTRG     STLMT10J
+  DSNAME   SETTLE.NETWORK.MC.DAILY
+  STATUS   CREATED
+
+DTRG     STLMT10J
+  DSNAME   SETTLE.NETWORK.STAR.DAILY
+  STATUS   CREATED
+
+*-----------------------------------------------------------------*
+*  MONTHLY JOBS (RUN ON FIRST BUSINESS DAY)                        *
+*-----------------------------------------------------------------*
+
+DJOB     PICRD40J
+  SCHID  010
+  DOTRIG RUN
+  SCHDDAYS(FIRST-BUS-DAY)
+  LEADTM 0030
+  DEADLN 0600
+  RESOLVE CALENDAR(BANKDAYS)
+
+*-----------------------------------------------------------------*
+*  RESTART/RECOVERY INSTRUCTIONS                                   *
+*-----------------------------------------------------------------*
+*  PI JOBS:                                                        *
+*    PICRD10J - RESTART FROM STEP SORT00, RE-INPUT AVAILABLE       *
+*    PICRD20J - RESTART FROM STEP MAIN, DB2 WILL ROLLBACK          *
+*    PICRD30J - RESTART FROM STEP MAIN, CHECK STATUS TABLE         *
+*    PICRD40J - RESTART FROM STEP MAIN, CURSOR REPOSITIONS         *
+*                                                                   *
+*  SETTLEMENT JOBS:                                                *
+*    STLMT10J - RESTART FROM STEP VSAM00, REDEFINE CLUSTER         *
+*    STLMT20J - RESTART FROM STEP SORT00, RE-SORT ACQUIRER         *
+*    STLMT30J - RESTART FROM STEP VSAM00, REDEFINE SUMMARY         *
+*    STLMT40J - RESTART FROM STEP MAIN, REPORTS ONLY               *
+*=================================================================*

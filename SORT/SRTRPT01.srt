@@ -1,0 +1,15 @@
+*-----------------------------------------------------------------*
+* SORT CONTROL: SRTRPT01                                           *
+* DESCRIPTION: SORT FOR REPORTING - BY NETWORK AND AMOUNT DESC     *
+* USED BY: STLMT40J                                                 *
+*-----------------------------------------------------------------*
+  SORT FIELDS=(75,4,CH,A,      * NETWORK ID
+               67,8,PD,D)      * AMOUNT DESCENDING
+
+  OUTFIL FNAMES=RPTOUT,
+    HEADER1=(5X,'SETTLEMENT TRANSACTIONS - SORTED BY NETWORK/AMOUNT',
+             /,5X,'==============================================',
+             /,5X,'NETWORK',4X,'TXN ID',18X,'AMOUNT',
+             /,5X,'-------',4X,20C'-',4X,15C'-')
+
+  OPTION DYNALLOC
