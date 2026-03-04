@@ -7,7 +7,7 @@
       * DESCRIPTION: SETTLEMENT - TRANSACTION MATCHING PROGRAM         *
       *              READS SORTED SETTLEMENT VSAM AND ACQUIRER FILE,   *
       *              PERFORMS MATCHING LOGIC, UPDATES STATUS.           *
-      * INPUT:       STLVSAM  - SETTLEMENT VSAM KSDS (INPUT)          *
+      * INPUT:       STLSORT  - SETTLEMENT RECORDS SORTED BY TXN-ID  *
       *              ACQFILE  - ACQUIRER CONFIRMATION FILE (SORTED)    *
       * OUTPUT:      STLOUT   - MATCHED/UNMATCHED OUTPUT FILE          *
       *              STLERR   - MATCHING EXCEPTIONS FILE               *
@@ -21,11 +21,10 @@
 
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
-           SELECT SETTLE-VSAM-FILE
-               ASSIGN TO STLVSAM
-               ORGANIZATION IS INDEXED
+           SELECT SETTLE-SORTED-FILE
+               ASSIGN TO STLSORT
+               ORGANIZATION IS SEQUENTIAL
                ACCESS MODE IS SEQUENTIAL
-               RECORD KEY IS STL-VSAM-KEY
                FILE STATUS IS WS-VSAM-FILE-STATUS.
 
            SELECT ACQUIRER-FILE
@@ -55,11 +54,11 @@
        DATA DIVISION.
        FILE SECTION.
 
-       FD  SETTLE-VSAM-FILE.
-       01  SETTLE-VSAM-RECORD.
-           05  STL-VSAM-KEY.
-               10  STL-VSAM-SETTLE-ID     PIC X(20).
-           05  STL-VSAM-DATA              PIC X(230).
+       FD  SETTLE-SORTED-FILE
+           RECORDING MODE IS F
+           RECORD CONTAINS 250 CHARACTERS
+           BLOCK CONTAINS 0 RECORDS.
+       01  SETTLE-SORTED-RECORD           PIC X(250).
 
        FD  ACQUIRER-FILE
            RECORDING MODE IS F
@@ -170,14 +169,15 @@
                INTO WS-FORMATTED-DATE
            END-STRING
 
-           OPEN INPUT  SETTLE-VSAM-FILE
+           OPEN INPUT  SETTLE-SORTED-FILE
                        ACQUIRER-FILE
            OPEN OUTPUT MATCH-OUTPUT-FILE
                        MATCH-ERROR-FILE
                        MATCH-REPORT-FILE
 
            IF WS-VSAM-FILE-STATUS NOT = '00'
-               DISPLAY 'VSAM OPEN ERROR: ' WS-VSAM-FILE-STATUS
+               DISPLAY 'SORTED FILE OPEN ERROR: '
+                   WS-VSAM-FILE-STATUS
                MOVE 16 TO WS-RETURN-CODE
                PERFORM 9000-TERMINATE
                STOP RUN
@@ -209,29 +209,31 @@
                        PERFORM 2400-UNMATCHED-SETTLEMENT
                        PERFORM 2100-READ-VSAM
                    WHEN NOT WS-STL-EOF AND NOT WS-ACQ-EOF
-                       IF WS-MATCH-KEY-STL = WS-MATCH-KEY-ACQ
-                           PERFORM 2300-MATCH-FOUND
-                           PERFORM 2100-READ-VSAM
-                           PERFORM 2200-READ-ACQUIRER
-                       ELSE IF WS-MATCH-KEY-STL < WS-MATCH-KEY-ACQ
-                           PERFORM 2400-UNMATCHED-SETTLEMENT
-                           PERFORM 2100-READ-VSAM
-                       ELSE
-                           PERFORM 2500-UNMATCHED-ACQUIRER
-                           PERFORM 2200-READ-ACQUIRER
-                       END-IF
+                       EVALUATE TRUE
+                           WHEN WS-MATCH-KEY-STL = WS-MATCH-KEY-ACQ
+                               PERFORM 2300-MATCH-FOUND
+                               PERFORM 2100-READ-VSAM
+                               PERFORM 2200-READ-ACQUIRER
+                           WHEN WS-MATCH-KEY-STL < WS-MATCH-KEY-ACQ
+                               PERFORM 2400-UNMATCHED-SETTLEMENT
+                               PERFORM 2100-READ-VSAM
+                           WHEN OTHER
+                               PERFORM 2500-UNMATCHED-ACQUIRER
+                               PERFORM 2200-READ-ACQUIRER
+                       END-EVALUATE
                END-EVALUATE
            END-PERFORM
            .
 
        2100-READ-VSAM.
-           READ SETTLE-VSAM-FILE
+           READ SETTLE-SORTED-FILE
+               INTO SETTLE-SORTED-RECORD
                AT END
                    SET WS-STL-EOF TO TRUE
                    MOVE HIGH-VALUES TO WS-MATCH-KEY-STL
                NOT AT END
                    ADD 1 TO WS-STL-READ-COUNT
-                   MOVE SETTLE-VSAM-RECORD
+                   MOVE SETTLE-SORTED-RECORD
                        TO WS-SETTLE-TXN-REC
                    MOVE WS-ST-TXN-ID TO WS-MATCH-KEY-STL
            END-READ
@@ -347,7 +349,7 @@
            .
 
        9000-TERMINATE.
-           CLOSE SETTLE-VSAM-FILE
+           CLOSE SETTLE-SORTED-FILE
                  ACQUIRER-FILE
                  MATCH-OUTPUT-FILE
                  MATCH-ERROR-FILE

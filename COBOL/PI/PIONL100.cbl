@@ -35,7 +35,10 @@
        01  WS-COMMAREA-LENGTH             PIC S9(04) COMP VALUE 78.
 
       * SCREEN FIELD ATTRIBUTES
-       01  DFHBMSCA                       COPY DFHBMSCA.
+           COPY DFHBMSCA.
+
+      * EXECUTE INTERFACE BLOCK
+           COPY DFHEIBLK.
 
       * BMS MAP AREA
        01  PISCR01I.
@@ -116,9 +119,17 @@
 
        01  WS-RESP-CODE                   PIC S9(08) COMP.
 
+       LINKAGE SECTION.
+       01  DFHCOMMAREA                    PIC X(78).
+
        PROCEDURE DIVISION.
 
        0000-MAIN-PROCESS.
+      *    RECEIVE COMMAREA FROM PREVIOUS TRANSACTION
+           IF EIBCALEN > 0
+               MOVE DFHCOMMAREA TO WS-COMMAREA
+           END-IF
+
            EVALUATE TRUE
                WHEN WS-CA-FIRST-TIME
                    PERFORM 1000-SEND-EMPTY-MAP

@@ -359,7 +359,12 @@
       * 9000-TERMINATE: CLOSE FILES AND COMMIT                         *
       ******************************************************************
        9000-TERMINATE.
-           EXEC SQL COMMIT END-EXEC
+           IF WS-RETURN-CODE > 0
+               EXEC SQL ROLLBACK END-EXEC
+               DISPLAY 'PICRD200 DB2 ROLLBACK PERFORMED'
+           ELSE
+               EXEC SQL COMMIT END-EXEC
+           END-IF
 
            CLOSE ACTV-INPUT-FILE
                  ACTV-OUTPUT-FILE

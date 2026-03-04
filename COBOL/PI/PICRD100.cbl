@@ -86,7 +86,6 @@
 
       * INCLUDE COPYBOOKS
            COPY CPYCRD01.
-           COPY CPYCRD02.
            COPY CPYCOM01.
            COPY CPYERR01.
 
@@ -501,7 +500,12 @@
       * 9000-TERMINATE: CLOSE FILES, COMMIT AND CLEANUP                *
       ******************************************************************
        9000-TERMINATE.
-           EXEC SQL COMMIT END-EXEC
+           IF WS-RETURN-CODE > 0
+               EXEC SQL ROLLBACK END-EXEC
+               DISPLAY 'PICRD100 DB2 ROLLBACK PERFORMED'
+           ELSE
+               EXEC SQL COMMIT END-EXEC
+           END-IF
 
            CLOSE CARD-INPUT-FILE
                  CARD-OUTPUT-FILE

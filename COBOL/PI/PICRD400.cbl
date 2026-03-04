@@ -61,8 +61,21 @@
       * RENEWAL PARAMETERS
        01  WS-RENEWAL-PARAMS.
            05  WS-LOOK-AHEAD-DAYS        PIC 9(03) VALUE 060.
-           05  WS-RENEWAL-YEARS          PIC 9(02) VALUE 003.
+           05  WS-RENEWAL-YEARS          PIC 9(02) VALUE 03.
            05  WS-CUTOFF-DATE            PIC X(10).
+
+      * DATE CALCULATION WORK AREAS
+       01  WS-DATE-CALC.
+           05  WS-CALC-YEAR              PIC 9(04).
+           05  WS-CALC-MONTH             PIC 9(02).
+           05  WS-CALC-DAY               PIC 9(02).
+           05  WS-CALC-INTEGER-DATE      PIC 9(07).
+           05  WS-CALC-YYYYMMDD          PIC 9(08).
+           05  WS-CALC-YYYYMMDD-X REDEFINES WS-CALC-YYYYMMDD.
+               10  WS-CALC-YYYY          PIC X(04).
+               10  WS-CALC-MM            PIC X(02).
+               10  WS-CALC-DD            PIC X(02).
+           05  WS-EXPIRY-YEAR            PIC 9(04).
 
       * DB2 HOST VARIABLES
            EXEC SQL INCLUDE SQLCA END-EXEC.
@@ -122,12 +135,23 @@
            END-STRING
 
       *    CALCULATE CUTOFF DATE (CURRENT + 60 DAYS)
-           COMPUTE WS-DATE-WORK-1 =
+      *    USE INTEGER-OF-DATE / DATE-OF-INTEGER FOR PROPER
+      *    CALENDAR ARITHMETIC (HANDLES MONTH/YEAR ROLLOVER)
+           COMPUTE WS-CALC-YYYYMMDD =
                (WS-CURRENT-YEAR * 10000) +
                (WS-CURRENT-MONTH * 100) +
                WS-CURRENT-DAY
-           ADD WS-LOOK-AHEAD-DAYS TO WS-CURRENT-DAY
-           MOVE WS-FORMATTED-DATE TO WS-CUTOFF-DATE
+           COMPUTE WS-CALC-INTEGER-DATE =
+               FUNCTION INTEGER-OF-DATE(WS-CALC-YYYYMMDD)
+           ADD WS-LOOK-AHEAD-DAYS TO WS-CALC-INTEGER-DATE
+           COMPUTE WS-CALC-YYYYMMDD =
+               FUNCTION DATE-OF-INTEGER(WS-CALC-INTEGER-DATE)
+           STRING WS-CALC-YYYY '-'
+                  WS-CALC-MM '-'
+                  WS-CALC-DD
+               DELIMITED BY SIZE
+               INTO WS-CUTOFF-DATE
+           END-STRING
            MOVE WS-CUTOFF-DATE TO HV-CUTOFF-DATE
 
            OPEN OUTPUT RENEWAL-OUTPUT-FILE
@@ -183,21 +207,49 @@
       ******************************************************************
        2100-GENERATE-RENEWAL.
            ADD 1 TO WS-RENEW-SEQ
+      *    BUILD 15-DIGIT BASE (BIN prefix + sequence)
            STRING '400012'
                   WS-RENEW-SEQ
                DELIMITED BY SIZE
                INTO HV-NEW-CARD-NUMBER
            END-STRING
+      *    COMPUTE LUHN CHECK DIGIT FOR POSITION 16
+           PERFORM 2110-COMPUTE-LUHN-CHECK
 
-      *    CALCULATE NEW EXPIRY (3 YEARS FROM NOW)
-           COMPUTE WS-DATE-WORK-1 = WS-CURRENT-YEAR
+      *    CALCULATE NEW EXPIRY (RENEWAL-YEARS FROM NOW)
+           COMPUTE WS-EXPIRY-YEAR = WS-CURRENT-YEAR
                                   + WS-RENEWAL-YEARS
-           STRING WS-DATE-WORK-1(1:4) '-'
+           STRING WS-EXPIRY-YEAR '-'
                   WS-CURRENT-MONTH '-'
                   WS-CURRENT-DAY
                DELIMITED BY SIZE
                INTO HV-NEW-EXPIRY-DATE
            END-STRING
+           .
+
+      ******************************************************************
+      * 2110-COMPUTE-LUHN-CHECK: GENERATE CHECK DIGIT (POS 16)        *
+      *   APPLIES LUHN MOD-10 TO FIRST 15 DIGITS OF CARD NUMBER       *
+      ******************************************************************
+       2110-COMPUTE-LUHN-CHECK.
+           MOVE ZEROS TO WS-DATE-WORK-1
+           PERFORM VARYING WS-DATE-WORK-2 FROM 1 BY 1
+               UNTIL WS-DATE-WORK-2 > 15
+               COMPUTE WS-CALC-DAY =
+                   FUNCTION ORD(HV-NEW-CARD-NUMBER
+                       (WS-DATE-WORK-2:1)) - 49
+               IF FUNCTION MOD(WS-DATE-WORK-2, 2) = 1
+                   COMPUTE WS-CALC-DAY = WS-CALC-DAY * 2
+                   IF WS-CALC-DAY > 9
+                       SUBTRACT 9 FROM WS-CALC-DAY
+                   END-IF
+               END-IF
+               ADD WS-CALC-DAY TO WS-DATE-WORK-1
+           END-PERFORM
+           COMPUTE WS-CALC-DAY =
+               FUNCTION MOD((10 - FUNCTION MOD(
+                   WS-DATE-WORK-1, 10)), 10)
+           MOVE WS-CALC-DAY TO HV-NEW-CARD-NUMBER(16:1)
            .
 
        2200-INSERT-NEW-CARD.
@@ -268,7 +320,12 @@
            .
 
        9000-TERMINATE.
-           EXEC SQL COMMIT END-EXEC
+           IF WS-RETURN-CODE > 0
+               EXEC SQL ROLLBACK END-EXEC
+               DISPLAY 'PICRD400 DB2 ROLLBACK PERFORMED'
+           ELSE
+               EXEC SQL COMMIT END-EXEC
+           END-IF
            CLOSE RENEWAL-OUTPUT-FILE
                  RENEWAL-REPORT-FILE
            DISPLAY 'PICRD400 PROCESSING COMPLETE'

@@ -30,4 +30,4 @@
            05  WS-ST-SETTLE-DATE        PIC X(10).
            05  WS-ST-BATCH-SEQ-NUM      PIC 9(06).
            05  WS-ST-CREATED-TIMESTAMP  PIC X(26).
-           05  FILLER                   PIC X(15).
+           05  FILLER                   PIC X(33).

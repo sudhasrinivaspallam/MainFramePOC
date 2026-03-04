@@ -7,12 +7,40 @@
 //* DESC: SETTLEMENT - TRANSACTION MATCHING                        *
 //* FREQ: DAILY - CA7 SCHEDULED AFTER STLMT10J                    *
 //* DEPENDS: STLMT10J (SUCCESSFUL)                                 *
-//* PROGRAMS: SORT, STLMT200 (COBOL/VSAM)                         *
+//* PROGRAMS: IDCAMS REPRO, SORT, STLMT200 (COBOL)                *
 //*****************************************************************
 //*
-//*------- STEP 01: SORT ACQUIRER FILE BY TXN ID ------------------
+//*------- STEP 01: REPRO VSAM TO FLAT FILE -----------------------
 //*
-//STEP010  EXEC PGM=SORT
+//STEP005  EXEC PGM=IDCAMS
+//SYSPRINT DD SYSOUT=*
+//INVSAMFL DD DSN=SETTLE.DAILY.TRANS,
+//            DISP=SHR
+//OUTFLAT  DD DSN=&&VSAMFLAT,
+//            DISP=(NEW,PASS),
+//            SPACE=(CYL,(20,10),RLSE),
+//            DCB=(RECFM=FB,LRECL=250,BLKSIZE=0)
+//SYSIN    DD *
+  REPRO INFILE(INVSAMFL) OUTFILE(OUTFLAT)
+/*
+//*
+//*------- STEP 02: SORT VSAM EXTRACT BY TXN ID ------------------
+//*
+//STEP007  EXEC PGM=SORT,COND=(4,LT)
+//SYSOUT   DD SYSOUT=*
+//SORTIN   DD DSN=&&VSAMFLAT,
+//            DISP=(OLD,DELETE)
+//SORTOUT  DD DSN=&&SORTSTL,
+//            DISP=(NEW,PASS),
+//            SPACE=(CYL,(20,10),RLSE),
+//            DCB=(RECFM=FB,LRECL=250,BLKSIZE=0)
+//SYSIN    DD *
+  SORT FIELDS=(21,20,CH,A)
+/*
+//*
+//*------- STEP 03: SORT ACQUIRER FILE BY TXN ID ------------------
+//*
+//STEP010  EXEC PGM=SORT,COND=(4,LT)
 //SYSOUT   DD SYSOUT=*
 //SORTIN   DD DSN=ACQUIRE.DAILY.CONFIRMATIONS,
 //            DISP=SHR
@@ -25,12 +53,12 @@
   INCLUDE COND=(1,20,CH,NE,C'                    ')
 /*
 //*
-//*------- STEP 02: EXECUTE MATCHING PROGRAM ----------------------
+//*------- STEP 04: EXECUTE MATCHING PROGRAM ----------------------
 //*
 //STEP020  EXEC PGM=STLMT200,COND=(4,LT)
 //STEPLIB  DD DSN=SETTLE.PROD.LOADLIB,DISP=SHR
-//STLVSAM  DD DSN=SETTLE.DAILY.TRANS,
-//            DISP=SHR
+//STLSORT  DD DSN=&&SORTSTL,
+//            DISP=(OLD,DELETE)
 //ACQFILE  DD DSN=&&SORTACQ,
 //            DISP=(OLD,DELETE)
 //STLOUT   DD DSN=SETTLE.DAILY.MATCHED(&DATE.),

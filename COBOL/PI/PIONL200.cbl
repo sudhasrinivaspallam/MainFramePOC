@@ -34,6 +34,12 @@
 
        01  WS-COMMAREA-LENGTH             PIC S9(04) COMP VALUE 78.
 
+      * SCREEN FIELD ATTRIBUTES
+           COPY DFHBMSCA.
+
+      * EXECUTE INTERFACE BLOCK
+           COPY DFHEIBLK.
+
       * BMS MAP AREA
        01  PISCR02I.
            05  FILLER                     PIC X(12).
@@ -95,9 +101,16 @@
        01  WS-RESP-CODE                   PIC S9(08) COMP.
        01  WS-NUM-DAILY-LIMIT             PIC S9(09)V99.
 
+       LINKAGE SECTION.
+       01  DFHCOMMAREA                    PIC X(78).
+
        PROCEDURE DIVISION.
 
        0000-MAIN-PROCESS.
+      *    RECEIVE COMMAREA FROM PREVIOUS TRANSACTION
+           IF EIBCALEN > 0
+               MOVE DFHCOMMAREA TO WS-COMMAREA
+           END-IF
            EVALUATE TRUE
                WHEN WS-CA-FIRST-TIME
                    PERFORM 1000-SEND-EMPTY-MAP
@@ -193,6 +206,13 @@
            MOVE STATEI            TO HV-STATE
            MOVE ZIPI              TO HV-ZIP-CODE
 
+      *    CONVERT DAILY LIMIT FROM SCREEN TO NUMERIC
+           IF DAYLMTL > 0
+               COMPUTE WS-NUM-DAILY-LIMIT =
+                   FUNCTION NUMVAL(DAYLMTI)
+               MOVE WS-NUM-DAILY-LIMIT TO HV-DAILY-LIMIT
+           END-IF
+
            EXEC SQL
                UPDATE TB_CARD_MASTER
                SET ADDR_LINE1 = :HV-ADDR-LINE1,
@@ -200,15 +220,16 @@
                    CITY = :HV-CITY,
                    STATE = :HV-STATE,
                    ZIP_CODE = :HV-ZIP-CODE,
+                   DAILY_LIMIT = :HV-DAILY-LIMIT,
                    UPDATED_TIMESTAMP = CURRENT TIMESTAMP
                WHERE CARD_NUMBER = :HV-CARD-NUMBER
            END-EXEC
 
            IF SQLCODE = 0
-               EXEC SQL COMMIT END-EXEC
+               EXEC CICS SYNCPOINT END-EXEC
                MOVE 'CARD UPDATED SUCCESSFULLY' TO MSGO
            ELSE
-               EXEC SQL ROLLBACK END-EXEC
+               EXEC CICS SYNCPOINT ROLLBACK END-EXEC
                MOVE 'UPDATE FAILED - CONTACT SUPPORT' TO MSGO
            END-IF
 

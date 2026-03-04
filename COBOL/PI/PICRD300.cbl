@@ -223,15 +223,18 @@
                WHERE CARD_NUMBER = :HV-CARD-NUMBER
            END-EXEC
 
-           IF SQLCODE = 100
-               MOVE 'CARD NOT FOUND' TO WS-ERR-MESSAGE
-               SET WS-INVALID-TRANSITION TO TRUE
-           ELSE IF SQLCODE NOT = 0
-               MOVE SQLCODE TO WS-ERR-SQLCODE
-               MOVE 'DB2 SELECT FAILED' TO WS-ERR-MESSAGE
-               MOVE 'S' TO WS-ERR-SEVERITY
-               PERFORM 8000-ERROR-HANDLER
-           END-IF
+           EVALUATE SQLCODE
+               WHEN 0
+                   CONTINUE
+               WHEN 100
+                   MOVE 'CARD NOT FOUND' TO WS-ERR-MESSAGE
+                   SET WS-INVALID-TRANSITION TO TRUE
+               WHEN OTHER
+                   MOVE SQLCODE TO WS-ERR-SQLCODE
+                   MOVE 'DB2 SELECT FAILED' TO WS-ERR-MESSAGE
+                   MOVE 'S' TO WS-ERR-SEVERITY
+                   PERFORM 8000-ERROR-HANDLER
+           END-EVALUATE
 
            IF WS-VALID-TRANSITION
                EVALUATE TRUE
@@ -389,7 +392,12 @@
            .
 
        9000-TERMINATE.
-           EXEC SQL COMMIT END-EXEC
+           IF WS-RETURN-CODE > 0
+               EXEC SQL ROLLBACK END-EXEC
+               DISPLAY 'PICRD300 DB2 ROLLBACK PERFORMED'
+           ELSE
+               EXEC SQL COMMIT END-EXEC
+           END-IF
            CLOSE STATUS-INPUT-FILE
                  STATUS-OUTPUT-FILE
                  STATUS-ERROR-FILE
