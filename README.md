@@ -130,6 +130,77 @@ STLMT10J (Extract) → STLMT20J (Matching) → STLMT30J (Reconciliation) → STL
 
 ---
 
+### Local Execution (GnuCOBOL)
+
+The `LOCAL/` directory contains a fully runnable version of the entire POC adapted for **GnuCOBOL 3.2+ on Windows** (via MSYS2). All DB2 SQL is replaced with COBOL indexed files (KSDS equivalent), and CICS online programs use batch ACCEPT/DISPLAY.
+
+#### Prerequisites
+
+1. **MSYS2** with the `ucrt64` toolchain
+2. **GnuCOBOL 3.2+** installed via `pacman -S mingw-w64-ucrt-x86_64-gnucobol`
+
+#### LOCAL Directory Structure
+
+```
+LOCAL/
+├── COBOL/          # 13 COBOL programs adapted for local execution
+│   ├── PILOAD0.cbl     # Test data loader (10 sample cards)
+│   ├── GENDATA.cbl     # Generates all test input data files
+│   ├── PICRD100.cbl    # Card Issuance (DB2 INSERT → indexed WRITE)
+│   ├── PICRD200.cbl    # Card Activation (DB2 UPDATE → READ/REWRITE)
+│   ├── PICRD300.cbl    # Status Update + History (indexed files)
+│   ├── PICRD400.cbl    # Card Renewal (CURSOR → START/READ NEXT)
+│   ├── PIONL100.cbl    # Card Inquiry (CICS → ACCEPT/DISPLAY)
+│   ├── PIONL200.cbl    # Card Update (CICS → ACCEPT/DISPLAY)
+│   ├── STLMT100.cbl    # Network Extract (validates & loads TXNs)
+│   ├── STLSORT.cbl     # VSAM-to-Sequential copy (replaces DFSORT)
+│   ├── STLMT200.cbl    # Transaction Matching (two-file merge)
+│   ├── STLMT300.cbl    # Net Settlement (network aggregation)
+│   └── STLMT400.cbl    # Management Report + SAS CSV feed
+├── COPYBOOK/       # 7 copybooks (COMP-3 → display numeric)
+├── DATA/           # Runtime data files (created by programs)
+├── OUTPUT/         # Reports and output files
+├── BIN/            # Compiled executables
+├── build.sh        # Compile all 13 programs
+└── run.sh          # Execute full end-to-end pipeline
+```
+
+#### Build & Run
+
+```bash
+# From MSYS2 terminal:
+export PATH=/ucrt64/bin:$PATH
+export COB_CONFIG_DIR=/ucrt64/share/gnucobol/config
+export COB_COPY_DIR=/ucrt64/share/gnucobol/copy
+cd /c/Users/<your-user>/source/Repos/MainFramePOC/LOCAL
+
+bash build.sh    # Compiles all 13 programs → BIN/
+bash run.sh      # Runs full pipeline end-to-end
+```
+
+#### Pipeline Execution Order
+
+```
+PILOAD0 → GENDATA → PICRD100 → PICRD200 → PICRD300 → PICRD400
+  → PIONL100 → PIONL200 → STLMT100 → STLSORT → STLMT200
+  → STLMT300 → STLMT400
+```
+
+#### Key Outputs
+| File | Description |
+|------|-------------|
+| OUTPUT/CARDRPT.txt | Card issuance report |
+| OUTPUT/ACTVRPT.txt | Activation report |
+| OUTPUT/STSRPT.txt | Status change report |
+| OUTPUT/RENWRPT.txt | Renewal report |
+| OUTPUT/STLRPT.txt | Settlement extract report |
+| OUTPUT/STLRPT2.txt | Matching summary report |
+| OUTPUT/STLRPT3.txt | Reconciliation report |
+| OUTPUT/MGTRPT.txt | Management report (per-network) |
+| OUTPUT/SASOUT.csv | SAS-ready CSV feed |
+
+---
+
 ### Environment Setup
 
 This POC is designed to be reviewed and understood as a simulation of a mainframe environment. The code follows IBM mainframe standards and conventions and can be deployed to:
@@ -138,6 +209,7 @@ This POC is designed to be reviewed and understood as a simulation of a mainfram
 - **Micro Focus Enterprise Developer** for local development
 - **IBM zD&T** (Z Development and Test)
 - **Zowe CLI** for remote mainframe interaction
+- **GnuCOBOL** for local compilation and testing (see LOCAL/ directory)
 
 ---
 
