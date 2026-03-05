@@ -8,6 +8,7 @@ import com.wellsfargo.payments.util.LuhnUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -55,6 +56,11 @@ public class CardService {
         this.sequenceCounter = new AtomicInteger(100);
     }
 
+    /**
+     * Initialize sequence counter from DB once at startup.
+     * Uses @PostConstruct to avoid race condition from per-call DB reads.
+     */
+    @PostConstruct
     private void initSequence() {
         try {
             int maxSeq = cardRepo.findMaxSequence();
@@ -67,10 +73,10 @@ public class CardService {
     /**
      * PICRD100 - Issue new card with Luhn validation.
      * Generates 16-digit card number: BIN(400012) + sequence(9) + check(1).
+     * Uses AtomicInteger for thread-safe sequence allocation.
      */
     @Transactional
-    public CardMaster issueCard(CardMaster request) {
-        initSequence();
+    public synchronized CardMaster issueCard(CardMaster request) {
         int seq = sequenceCounter.getAndIncrement();
         String cardNumber = LuhnUtil.generateCardNumber(seq);
 
@@ -160,11 +166,11 @@ public class CardService {
         List<CardMaster> expiringCards = cardRepo.findCardsForRenewal("AC", cutoffDate);
 
         List<Map<String, String>> renewalPairs = new ArrayList<>();
-        int renewalSeq = 500;
 
         for (CardMaster oldCard : expiringCards) {
-            // Generate new card
-            String newCardNumber = LuhnUtil.generateCardNumber(renewalSeq++);
+            // Generate new card using shared sequence counter (thread-safe)
+            int renewalSeq = sequenceCounter.getAndIncrement();
+            String newCardNumber = LuhnUtil.generateCardNumber(renewalSeq);
 
             CardMaster newCard = new CardMaster();
             newCard.setCardNumber(newCardNumber);

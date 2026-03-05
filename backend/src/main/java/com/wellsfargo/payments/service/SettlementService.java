@@ -60,7 +60,7 @@ public class SettlementService {
                 txn.setSettleId(datePrefix + String.format("%04d", seqNum++));
                 txn.setSettleStatus("PE");
                 txn.setSettleDate(LocalDate.now());
-                txn.setBatchSeqNum(seqNum);
+                txn.setBatchSeqNum(seqNum - 1);
                 txnRepo.save(txn);
                 written++;
             } catch (Exception e) {
