@@ -26,6 +26,26 @@ This project simulates a **real-world mainframe financial domain application** c
 
 ---
 
+### Modernized Application Prototypes
+
+| Application | Technology | Purpose |
+|-------------|------------|---------|
+| `backend/` | Java 21, Spring Boot 3, Spring Batch | Migrated card and settlement services |
+| `frontend/` | React 18, TypeScript, Vite | Plastic Issuance and Settlement user interface |
+| `onboarding-frontend/` | React 18, TypeScript, Vite | Standalone business-banking onboarding, approval, and inquiry portal |
+
+Run the onboarding portal:
+
+```bash
+cd onboarding-frontend
+npm install
+npm run dev
+```
+
+See [`onboarding-frontend/README.md`](onboarding-frontend/README.md) for demo roles, workflows, and validation commands.
+
+---
+
 ### Project Structure
 
 ```
