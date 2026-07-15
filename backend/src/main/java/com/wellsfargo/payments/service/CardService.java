@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 public class CardService {
 
+    private static final Set<String> VALID_CARD_TYPES = Set.of("DB", "PP");
+
     /**
      * Valid status transitions - mirrors PICRD300.cbl EVALUATE (lines 253-306).
      * Format: "FROM-TO" pairs.
@@ -32,8 +34,7 @@ public class CardService {
         "BL-AC",  // Unblock blocked card
         "AC-CL",  // Close active card
         "BL-CL",  // Close blocked card
-        "NW-CL",  // Close new card
-        "AC-HL"   // Hotlist active card
+        "NW-CL"   // Close new card
     );
 
     /**
@@ -43,7 +44,7 @@ public class CardService {
         "BL", "BL",  // Block
         "UB", "AC",  // Unblock
         "CL", "CL",  // Close
-        "HL", "HL"   // Hotlist
+        "HL", "BL"   // Hotlist
     );
 
     private final CardMasterRepository cardRepo;
@@ -77,9 +78,24 @@ public class CardService {
      */
     @Transactional
     public synchronized CardMaster issueCard(CardMaster request) {
+        String cardType = request.getCardType() == null ? "" : request.getCardType().trim();
+        if (!VALID_CARD_TYPES.contains(cardType)) {
+            throw new IllegalArgumentException("Invalid card type: " + request.getCardType());
+        }
+        if (isBlank(request.getAccountNumber())) {
+            throw new IllegalArgumentException("Account number is required");
+        }
+        if (isBlank(request.getCustomerId())) {
+            throw new IllegalArgumentException("Customer ID is required");
+        }
+        if (isBlank(request.getFirstName()) || isBlank(request.getLastName())) {
+            throw new IllegalArgumentException("Customer name is required");
+        }
+
         int seq = sequenceCounter.getAndIncrement();
         String cardNumber = LuhnUtil.generateCardNumber(seq);
 
+        request.setCardType(cardType);
         request.setCardNumber(cardNumber);
         request.setCardStatus("NW");
         request.setIssueDate(LocalDate.now());
@@ -396,5 +412,9 @@ public class CardService {
             }
         }
         return String.join(", ", allowed);
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

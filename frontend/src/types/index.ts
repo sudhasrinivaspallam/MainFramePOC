@@ -148,7 +148,6 @@ export const STATUS_LABELS: Record<string, string> = {
   BL: "Blocked",
   EX: "Expired",
   CL: "Closed",
-  HL: "Hotlisted",
 };
 
 export const STATUS_COLORS: Record<string, string> = {
@@ -158,7 +157,6 @@ export const STATUS_COLORS: Record<string, string> = {
   BL: "bg-red-100 text-red-800",
   EX: "bg-orange-100 text-orange-800",
   CL: "bg-gray-200 text-gray-600",
-  HL: "bg-purple-100 text-purple-800",
 };
 
 export const SETTLE_STATUS_LABELS: Record<string, string> = {

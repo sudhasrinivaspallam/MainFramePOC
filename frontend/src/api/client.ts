@@ -67,6 +67,22 @@ function todayStr(): string {
   return new Date().toISOString().substring(0, 10);
 }
 
+const CARD_ACTION_STATUS: Record<string, string> = {
+  BL: "BL",
+  UB: "AC",
+  CL: "CL",
+  HL: "BL",
+};
+
+const VALID_CARD_TRANSITIONS = new Set([
+  "NW-AC",
+  "AC-BL",
+  "BL-AC",
+  "AC-CL",
+  "BL-CL",
+  "NW-CL",
+]);
+
 // ================================================================
 // HTTP helpers
 // ================================================================
@@ -177,12 +193,18 @@ export async function searchCards(query: string): Promise<Card[]> {
 
 export async function issueCard(data: Record<string, unknown>): Promise<Card> {
   if (useLocalStorage) {
+    const cardType = String(data.card_type || "").trim();
+    if (!["DB", "PP"].includes(cardType)) throw new Error("Invalid card type");
+    const requiredFields = ["account_number", "customer_id", "first_name", "last_name"];
+    if (requiredFields.some((field) => !String(data[field] || "").trim()))
+      throw new Error("Account number, customer ID, and customer name are required");
+
     const cards = lsGetCards();
     const seq = cards.length + 100;
     const cardNumber = generateCardNumber(seq);
     const card: Card = {
       card_number: cardNumber,
-      card_type: (data.card_type as string) || "DB",
+      card_type: cardType,
       account_number: (data.account_number as string) || "",
       customer_id: (data.customer_id as string) || "",
       first_name: (data.first_name as string) || "",
@@ -239,9 +261,11 @@ export async function updateCardStatus(
     const cards = lsGetCards();
     const idx = cards.findIndex((c) => c.card_number === cardNumber);
     if (idx === -1) throw new Error("Card not found");
-    const actionMap: Record<string, string> = { BL: "BL", UB: "AC", CL: "CL", HL: "HL" };
-    const newStatus = actionMap[data.action_code as string];
+    const newStatus = CARD_ACTION_STATUS[data.action_code as string];
     if (!newStatus) throw new Error("Invalid action code");
+    const transition = `${cards[idx].card_status}-${newStatus}`;
+    if (!VALID_CARD_TRANSITIONS.has(transition))
+      throw new Error(`Invalid status transition: ${transition}`);
     cards[idx].card_status = newStatus;
     cards[idx].updated_timestamp = nowTimestamp();
     lsSaveCards(cards);

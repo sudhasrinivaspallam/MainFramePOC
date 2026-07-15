@@ -8,7 +8,7 @@ const ACTIONS = [
   { code: "BL", label: "Block Card", desc: "Block an active card (AC → BL)", color: "bg-red-600" },
   { code: "UB", label: "Unblock Card", desc: "Unblock a blocked card (BL → AC)", color: "bg-green-600" },
   { code: "CL", label: "Close Card", desc: "Close card permanently (AC/BL/NW → CL)", color: "bg-gray-600" },
-  { code: "HL", label: "Hotlist Card", desc: "Hotlist an active card (AC → HL)", color: "bg-orange-600" },
+  { code: "HL", label: "Hotlist Card", desc: "Hotlist an active card (AC → BL)", color: "bg-orange-600" },
 ];
 
 export default function CardStatus() {
@@ -124,7 +124,7 @@ export default function CardStatus() {
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-xs text-yellow-800 font-medium mb-1">Valid Transitions (PICRD300):</p>
               <ul className="text-xs text-yellow-700 space-y-0.5">
-                <li>• Active (AC) → Blocked, Closed, Hotlisted</li>
+                <li>• Active (AC) → Blocked/Hotlisted (BL), Closed</li>
                 <li>• Blocked (BL) → Active (Unblock), Closed</li>
                 <li>• New (NW) → Closed</li>
               </ul>

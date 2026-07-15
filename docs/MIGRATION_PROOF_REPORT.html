@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Migration Proof Report — COBOL to Java Same-to-Same Verification</title>
+    <title>Migration Proof Report — COBOL to Java Parity Evidence</title>
     <style>
         :root {
             --wf-red: #D71E28;
@@ -231,13 +231,13 @@
 <!-- ═══════════════════════════════════ HEADER ═══════════════════════════════════ -->
 <div class="header">
     <h1>Migration Proof Report</h1>
-    <div class="subtitle">COBOL Mainframe &rarr; Java 21 + Spring Boot 3 &mdash; Same-to-Same Verification</div>
-    <div class="meta">Wells Fargo Payments Division &bull; Plastic Issuance &amp; Settlement Systems &bull; Generated March 2026</div>
+    <div class="subtitle">COBOL Mainframe &rarr; Java 21 + Spring Boot 3 &mdash; Same-to-Same Implementation Evidence</div>
+    <div class="meta">Wells Fargo Payments Division &bull; Plastic Issuance &amp; Settlement Systems &bull; Updated July 2026</div>
 </div>
 
 <div class="verdict-banner">
     <span class="score">13 / 13 Programs Migrated</span>
-    All core business logic preserved &mdash; Same inputs produce same outputs
+    Critical business rules mapped, corrected, and covered by focused automated tests
 </div>
 
 <nav class="nav-bar">
@@ -269,31 +269,33 @@
             <div class="label">Copybooks &rarr; JPA Entities</div>
         </div>
         <div class="summary-card highlight">
-            <div class="number">8</div>
+            <div class="number">10</div>
             <div class="label">Business Rules Preserved</div>
         </div>
         <div class="summary-card highlight">
-            <div class="number">100%</div>
-            <div class="label">Core Logic Coverage</div>
+            <div class="number">5</div>
+            <div class="label">Automated Parity Tests Passing</div>
         </div>
     </div>
 
     <div class="info-box success">
-        <strong>Verification Result: SAME-TO-SAME</strong><br>
+        <strong>Verification Result: CORE IMPLEMENTATION PARITY</strong><br>
         All 13 COBOL programs (6 Plastic Issuance + 4 Settlement + 2 Online + 1 Data Loader) have been migrated to Java 21 + Spring Boot 3.
-        Every business rule (Luhn algorithm, status transition matrix, O(n) sequential matching, 1.75% interchange fees, 60-day renewal window)
-        has been implemented with identical logic. The same inputs produce the same outputs. Database schema preserves all fields from COBOL copybooks.
+        Code review confirms direct mappings for card issuance validation, the Luhn algorithm, status transition matrix, settlement input validation, O(n) sequential matching,
+        1.75% interchange fees, and 60-day renewal window. Five focused Java tests verify issuance validation, hotlist behavior, and settlement validation.
+        Database entities preserve the business fields from the COBOL copybooks.
     </div>
 
     <h3>What This Report Proves</h3>
-    <p>This document provides line-by-line evidence that every COBOL program in the original mainframe project has been migrated to a functionally equivalent Java implementation.
+    <p>This document provides program mappings, side-by-side source evidence, and focused automated tests for the migrated implementation.
+    It demonstrates implementation parity for the documented core rules; it is not a byte-for-byte COBOL/Java differential execution certificate.
     For each program, we show:</p>
     <ul style="margin: 10px 0 0 20px;">
         <li>The original COBOL program name, purpose, and key logic</li>
         <li>The corresponding Java service method with the same logic</li>
         <li>Side-by-side code comparisons of critical algorithms</li>
         <li>Data structure mapping (COBOL copybook fields &rarr; JPA entity columns)</li>
-        <li>Business rule verification with code evidence</li>
+        <li>Business rule verification with code evidence and focused Java tests</li>
     </ul>
 </section>
 
@@ -460,7 +462,7 @@
 
 <!-- ═══════════════════════════════ BUSINESS RULES VERIFICATION ═══════════════════════════════ -->
 <section id="business-rules">
-    <h2>3. Business Rules Verification (8/8)</h2>
+    <h2>3. Business Rules Verification (10/10)</h2>
 
     <table>
         <thead>
@@ -473,13 +475,19 @@
         </thead>
         <tbody>
             <tr>
+                <td><strong>Card Issuance Validation</strong><br>Require DB/PP card type, account, customer ID, and customer name</td>
+                <td><code>PICRD100.cbl</code> lines 276-311<br>Validates request fields before card-number generation</td>
+                <td><code>CardService.issueCard()</code><br>Validates the same business fields; separate issue/renew endpoints represent NC/RC request routing</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
                 <td><strong>Luhn Card Number Generation</strong><br>BIN 400012 + 9-digit seq + check digit</td>
                 <td><code>PICRD100.cbl</code> lines 317-348<br>COMPUTE with DIVIDE/MULTIPLY, MOD-10</td>
                 <td><code>LuhnUtil.java</code> lines 17-29, 35-40<br><code>calculateLuhnCheckDigit()</code> + <code>generateCardNumber()</code></td>
                 <td><span class="status-pass">SAME</span></td>
             </tr>
             <tr>
-                <td><strong>Status Transition Matrix</strong><br>NW&rarr;AC, AC&rarr;BL, BL&rarr;AC, AC/BL/NW&rarr;CL, AC&rarr;HL</td>
+                <td><strong>Status Transition Matrix</strong><br>NW&rarr;AC, AC&rarr;BL, BL&rarr;AC, AC/BL/NW&rarr;CL; hotlist action HL maps AC&rarr;BL</td>
                 <td><code>PICRD300.cbl</code> lines 240-276<br>EVALUATE TRUE / WHEN blocks</td>
                 <td><code>CardService.java</code> lines 29-37<br><code>VALID_TRANSITIONS</code> Set + <code>ACTION_STATUS_MAP</code></td>
                 <td><span class="status-pass">SAME</span></td>
@@ -494,6 +502,12 @@
                 <td><strong>O(n) Sequential Matching</strong><br>Two-pointer merge on sorted txn_id</td>
                 <td><code>STLMT200.cbl</code> lines 200-226<br>EVALUATE with key comparison, advance pointers</td>
                 <td><code>SettlementService.java</code> lines 102-152<br>while-loop with <code>compareTo()</code>, advance si/ai</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td><strong>Settlement Input Validation</strong><br>Reject blank transaction/card IDs, zero amounts, blank dates, and unsupported networks</td>
+                <td><code>STLMT100.cbl</code> lines 221-255<br>Validates transaction ID, card number, amount, date, and VISA/MC/STAR network</td>
+                <td><code>SettlementService.extractTransactions()</code><br>Validates the same fields and normalizes padded <code>MC&nbsp;&nbsp;</code> to <code>MC</code></td>
                 <td><span class="status-pass">SAME</span></td>
             </tr>
             <tr>
@@ -522,6 +536,43 @@
             </tr>
         </tbody>
     </table>
+
+    <h3>Automated Test Evidence</h3>
+    <table>
+        <thead>
+            <tr><th>Test</th><th>COBOL Rule Covered</th><th>Result</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>CardServiceTest.issueCardRejectsTheSameRequiredFieldsAsPicrd100</code></td>
+                <td>Invalid card type and blank account/customer/name fields are rejected before persistence</td>
+                <td><span class="status-pass">PASS</span></td>
+            </tr>
+            <tr>
+                <td><code>CardServiceTest.hotlistActionBlocksActiveCardLikePicrd300</code></td>
+                <td>HL action on an active card stores status <code>BL</code> and writes the audit history</td>
+                <td><span class="status-pass">PASS</span></td>
+            </tr>
+            <tr>
+                <td><code>CardServiceTest.hotlistActionRejectsNonActiveCardLikePicrd300</code></td>
+                <td>HL action is rejected unless current status is <code>AC</code></td>
+                <td><span class="status-pass">PASS</span></td>
+            </tr>
+            <tr>
+                <td><code>SettlementServiceTest.extractAcceptsAndNormalizesValidCobolNetworkRecord</code></td>
+                <td>Valid <code>MC&nbsp;&nbsp;</code> record is accepted, normalized, sequenced, and marked <code>PE</code></td>
+                <td><span class="status-pass">PASS</span></td>
+            </tr>
+            <tr>
+                <td><code>SettlementServiceTest.extractRejectsTheSameInvalidFieldsAsStlmt100</code></td>
+                <td>Blank IDs, zero amount, blank date, and invalid network are rejected</td>
+                <td><span class="status-pass">PASS</span></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="info-box info">
+        <strong>Command evidence:</strong> <code>mvn test</code> &mdash; Tests run: 5, Failures: 0, Errors: 0, Skipped: 0.
+    </div>
 </section>
 
 <!-- ═══════════════════════════════ CODE EVIDENCE ═══════════════════════════════ -->
@@ -640,8 +691,7 @@ private static final Set&lt;String&gt; VALID_TRANSITIONS = Set.of(
     "BL-AC",  // Unblock blocked card
     "AC-CL",  // Close active card
     "BL-CL",  // Close blocked card
-    "NW-CL",  // Close new card
-    "AC-HL"   // Hotlist active card
+    "NW-CL"   // Close new card
 );
 
 private static final Map&lt;String, String&gt; ACTION_STATUS_MAP =
@@ -649,7 +699,7 @@ private static final Map&lt;String, String&gt; ACTION_STATUS_MAP =
         "BL", "BL",  // Block
         "UB", "AC",  // Unblock
         "CL", "CL",  // Close
-        "HL", "HL"   // Hotlist
+        "HL", "BL"   // Hotlist
     );
 
 // Validation logic
@@ -661,8 +711,9 @@ if (!VALID_TRANSITIONS.contains(transition)) {
         </div>
     </div>
     <div class="info-box success">
-        <strong>Transition Matrix Match:</strong> Both allow exactly the same transitions: BL (AC&rarr;BL), UB (BL&rarr;AC), CL (AC/BL/NW&rarr;CL), HL (AC&rarr;HL).
-        COBOL uses EVALUATE/WHEN blocks; Java uses a Set of valid "FROM-TO" pairs. Same action codes: BL, UB, CL, HL.
+        <strong>Transition Matrix Match:</strong> Both allow BL (AC&rarr;BL), UB (BL&rarr;AC), and CL (AC/BL/NW&rarr;CL).
+        The HL action also changes an active card to <code>BL</code>, exactly as <code>PICRD300.cbl</code> does; HL is an action code, not a stored card status.
+        COBOL uses EVALUATE/WHEN blocks; Java uses a Set of valid "FROM-TO" pairs.
     </div>
 
     <h3>4.3 O(n) Sequential Matching (STLMT200 &rarr; SettlementService)</h3>
@@ -1237,12 +1288,19 @@ for (SettlementTransaction txn : transactions) {
         </tbody>
     </table>
 
+    <h3>Verification Scope</h3>
+    <div class="info-box warn">
+        <strong>Evidence boundary:</strong> This report combines static source mapping, code review, successful builds, and five focused Java parity tests.
+        The repository does not yet contain an automated harness that compiles the COBOL programs and executes identical fixture inputs against both COBOL and Java.
+        Therefore, claims in this report apply to implementation-level parity of the documented rules, not exhaustive runtime equivalence for every possible input.
+    </div>
+
     <h3>Status Code Note</h3>
     <div class="info-box info">
         <strong>IN (Inactive) Status:</strong> The COBOL copybook <code>CPYCRD01.cpy</code> defines an 'IN' (Inactive) status value at line 30.
         However, none of the actual COBOL programs (PICRD100-400) implement an AC&rarr;IN or IN&rarr;AC transition &mdash; this status was defined but unused in the POC.
-        The Java migration adds 'HL' (Hotlist) as AC&rarr;HL, which matches the PICRD300.cbl action code at line 96 (<code>88 WS-STS-ACT-HOTLIST VALUE 'HL'</code>).
-        Both COBOL and Java support the same set of actual transitions: BL, UB, CL, HL.
+        <code>HL</code> is a PICRD300 action code (<code>88 WS-STS-ACT-HOTLIST VALUE 'HL'</code>), but the COBOL program stores <code>BL</code> as the new status.
+        The Java service and offline React fallback now preserve that behavior.
     </div>
 </section>
 
@@ -1256,7 +1314,7 @@ for (SettlementTransaction txn : transactions) {
             <div class="label">Programs Migrated</div>
         </div>
         <div class="summary-card highlight">
-            <div class="number">8/8</div>
+            <div class="number">10/10</div>
             <div class="label">Business Rules Preserved</div>
         </div>
         <div class="summary-card highlight">
@@ -1270,12 +1328,12 @@ for (SettlementTransaction txn : transactions) {
     </div>
 
     <div class="info-box success">
-        <strong>VERDICT: SAME-TO-SAME MIGRATION CONFIRMED</strong><br><br>
-        Every COBOL program in the original mainframe project has a direct Java equivalent that implements the same business logic.
-        The Luhn algorithm produces identical card numbers. The status transition matrix enforces identical rules.
-        The O(n) sequential matching algorithm processes transactions identically. The 1.75% interchange fee calculation yields identical results.
-        The 60-day renewal window uses identical date arithmetic. All data fields from COBOL copybooks are preserved in JPA entities with matching lengths and types.<br><br>
-        <strong>The migration is functionally equivalent &mdash; same inputs produce same outputs.</strong>
+        <strong>VERDICT: CORE SAME-TO-SAME IMPLEMENTATION PARITY CONFIRMED</strong><br><br>
+        Every COBOL program in scope has a direct modern implementation mapping. The Luhn algorithm preserves the BIN/sequence/check-digit rule.
+        The status transition matrix now matches PICRD300, including HL action &rarr; BL status. STLMT100 field and network validation is preserved.
+        The O(n) sequential matching structure, 1.75% interchange fee, and 60-day renewal logic are directly represented in Java.
+        All business fields from the card and settlement copybooks are mapped to typed JPA entities.<br><br>
+        <strong>Five focused parity tests pass. Exhaustive same-input/same-output certification requires the future COBOL/Java differential harness described above.</strong>
     </div>
 </section>
 
@@ -1285,7 +1343,7 @@ for (SettlementTransaction txn : transactions) {
     <p><strong>Migration Proof Report</strong> &mdash; Wells Fargo Payments Division</p>
     <p>COBOL Mainframe &rarr; Java 21 + Spring Boot 3 + React 18 + PostgreSQL 16</p>
     <p>PR: <a href="https://github.com/sudhasrinivaspallam/MainFramePOC/pull/1" target="_blank">github.com/sudhasrinivaspallam/MainFramePOC/pull/1</a></p>
-    <p style="margin-top:12px;opacity:0.6;">Generated March 2026 by Devin AI</p>
+    <p style="margin-top:12px;opacity:0.6;">Updated July 2026 by Devin AI</p>
 </footer>
 
 <script>

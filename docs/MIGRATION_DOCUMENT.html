@@ -98,7 +98,7 @@
   <p><strong>Key Achievements:</strong></p>
   <ul style="margin-left:1.5rem;margin-top:0.5rem;">
     <li>13 COBOL programs migrated to 3 Java service classes with full business logic preservation</li>
-    <li>4 COBOL copybooks mapped to 4 JPA entity classes with identical field structures</li>
+    <li>COBOL business fields mapped to typed JPA entity classes</li>
     <li>DB2 tables migrated to PostgreSQL 16 with H2 in-memory fallback for local development</li>
     <li>JCL batch jobs replaced with Spring Batch framework + REST-triggered pipelines</li>
     <li>CICS/BMS 3270 green screens replaced with modern React 18 responsive web UI</li>
@@ -246,7 +246,7 @@
     city            VARCHAR(30),
     state           VARCHAR(2),
     zip_code        VARCHAR(10),
-    card_status     VARCHAR(2) DEFAULT 'NW',  -- NW/AC/BL/CL/HL/EX
+    card_status     VARCHAR(2) DEFAULT 'NW',  -- NW/AC/IN/BL/EX/CL
     issue_date      DATE,
     expiry_date     DATE,
     activation_date DATE,
@@ -403,15 +403,15 @@ spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect</code></pre
 
 <h3>8.2 Status Transition Matrix (PICRD300 EVALUATE)</h3>
 <table class="status-matrix">
-  <thead><tr><th>From \ To</th><th>AC</th><th>BL</th><th>CL</th><th>HL</th></tr></thead>
+  <thead><tr><th>From \ Action</th><th>Activate</th><th>Block</th><th>Unblock</th><th>Close</th><th>Hotlist</th></tr></thead>
   <tbody>
-    <tr><td>NW (New)</td><td style="background:#d4edda">Allowed</td><td style="background:#f8d7da">Denied</td><td style="background:#d4edda">Allowed</td><td style="background:#f8d7da">Denied</td></tr>
-    <tr><td>AC (Active)</td><td style="background:#e8e8e8">-</td><td style="background:#d4edda">Allowed</td><td style="background:#d4edda">Allowed</td><td style="background:#d4edda">Allowed</td></tr>
-    <tr><td>BL (Blocked)</td><td style="background:#d4edda">Allowed</td><td style="background:#e8e8e8">-</td><td style="background:#d4edda">Allowed</td><td style="background:#f8d7da">Denied</td></tr>
-    <tr><td>CL (Closed)</td><td style="background:#f8d7da">Denied</td><td style="background:#f8d7da">Denied</td><td style="background:#e8e8e8">-</td><td style="background:#f8d7da">Denied</td></tr>
+    <tr><td>NW (New)</td><td style="background:#d4edda">AC</td><td style="background:#f8d7da">Denied</td><td style="background:#f8d7da">Denied</td><td style="background:#d4edda">CL</td><td style="background:#f8d7da">Denied</td></tr>
+    <tr><td>AC (Active)</td><td style="background:#f8d7da">Denied</td><td style="background:#d4edda">BL</td><td style="background:#f8d7da">Denied</td><td style="background:#d4edda">CL</td><td style="background:#d4edda">BL</td></tr>
+    <tr><td>BL (Blocked)</td><td style="background:#f8d7da">Denied</td><td style="background:#f8d7da">Denied</td><td style="background:#d4edda">AC</td><td style="background:#d4edda">CL</td><td style="background:#f8d7da">Denied</td></tr>
+    <tr><td>CL (Closed)</td><td style="background:#f8d7da">Denied</td><td style="background:#f8d7da">Denied</td><td style="background:#f8d7da">Denied</td><td style="background:#f8d7da">Denied</td><td style="background:#f8d7da">Denied</td></tr>
   </tbody>
 </table>
-<p style="margin-top:0.5rem;font-size:0.85rem;">Java implementation uses <code>Set.of("NW-AC", "AC-BL", "BL-AC", "AC-CL", "BL-CL", "NW-CL", "AC-HL")</code></p>
+<p style="margin-top:0.5rem;font-size:0.85rem;">Java uses <code>Set.of("NW-AC", "AC-BL", "BL-AC", "AC-CL", "BL-CL", "NW-CL")</code>. The PICRD300 <code>HL</code> action maps an active card to stored status <code>BL</code>.</p>
 
 <h3>8.3 O(n) Sequential Merge Matching (STLMT200)</h3>
 <div class="highlight">
@@ -593,21 +593,22 @@ npm run build
 <h2 id="devin-stats">12. Devin AI vs Manual Migration - Effort &amp; Stats</h2>
 
 <div class="highlight">
-  <strong>Key Insight:</strong> This entire migration was executed by <strong>Devin AI</strong> (Cognition AI's autonomous software engineer) in a single session, demonstrating dramatic efficiency gains over traditional manual migration approaches.
+  <strong>Measurement note:</strong> The Devin durations and manual-team figures below are planning estimates reconstructed from the migration sessions, not audited time sheets or a controlled benchmark.
+  Code, file, build, and test counts are repository evidence; cost and manual-effort comparisons should be validated against the organization's delivery model before use in a business case.
 </div>
 
 <h3>12.1 Migration Effort Comparison</h3>
 <table>
   <thead>
-    <tr><th>Metric</th><th>Devin AI (Actual)</th><th>Manual Team (Estimated)</th><th>Savings</th></tr>
+    <tr><th>Metric</th><th>Devin AI (Session Estimate)</th><th>Manual Team (Planning Estimate)</th><th>Interpretation</th></tr>
   </thead>
   <tbody>
     <tr><td><strong>Total Elapsed Time</strong></td><td>~2 hours</td><td>8-12 weeks (2-3 months)</td><td style="color:#155724;font-weight:bold;">99%+ time reduction</td></tr>
     <tr><td><strong>Team Size Required</strong></td><td>1 AI agent</td><td>4-6 developers (Java, React, DBA, DevOps)</td><td style="color:#155724;font-weight:bold;">80-85% headcount reduction</td></tr>
     <tr><td><strong>Total Person-Hours</strong></td><td>~2 hours</td><td>640-1,920 hours (4-6 devs x 8-12 weeks)</td><td style="color:#155724;font-weight:bold;">99.7-99.9% effort reduction</td></tr>
-    <tr><td><strong>Lines of Code Written</strong></td><td>~10,200 lines (58 files)</td><td>~10,200 lines (same output)</td><td>Equal output quality</td></tr>
-    <tr><td><strong>Cost (Est.)</strong></td><td>~$20-50 (AI compute)</td><td>$80,000-240,000 (salaries)</td><td style="color:#155724;font-weight:bold;">99.9% cost reduction</td></tr>
-    <tr><td><strong>Bugs in First Pass</strong></td><td>1 (JSON serialization mismatch - fixed in-session)</td><td>20-50+ (typical for manual migration)</td><td style="color:#155724;font-weight:bold;">95-98% fewer defects</td></tr>
+    <tr><td><strong>Repository Additions</strong></td><td>12,002 added lines across 61 migration files</td><td>Comparable scope would be required</td><td>Measured against <code>master</code>, including focused tests</td></tr>
+    <tr><td><strong>Cost</strong></td><td>Not available in repository/session evidence</td><td>Depends on staffing, rates, and controls</td><td>No defensible percentage claimed</td></tr>
+    <tr><td><strong>Defects Found During Review</strong></td><td>6 corrected: 3 sequence issues, issuance validation, hotlist mapping, settlement validation</td><td>Not measured</td><td>Five focused parity tests now guard the latest corrections</td></tr>
     <tr><td><strong>Documentation</strong></td><td>Auto-generated 600+ line HTML doc</td><td>1-2 weeks additional effort</td><td>Included at no extra cost</td></tr>
     <tr><td><strong>Rework Cycles</strong></td><td>1 (tech stack pivot: Python &rarr; Java)</td><td>3-5 typical rework iterations</td><td style="color:#155724;font-weight:bold;">Rapid adaptation</td></tr>
   </tbody>
@@ -631,7 +632,7 @@ npm run build
     <tr><td><strong>10. Documentation</strong></td><td>~10 min</td><td>1-2 weeks</td><td>600+ line comprehensive HTML migration document</td></tr>
     <tr><td><strong>11. Build &amp; Lint</strong></td><td>~5 min</td><td>1-2 days</td><td>Maven package, npm lint (0 errors), git commit (58 files), PR creation</td></tr>
     <tr style="background:#d4edda;font-weight:bold;">
-      <td>TOTAL</td><td>~2 hours</td><td>8-12 weeks</td><td>Complete production-grade migration</td>
+      <td>TOTAL</td><td>~2 active hours (session estimate)</td><td>8-12 weeks</td><td>Functional migration POC and documentation</td>
     </tr>
   </tbody>
 </table>
@@ -680,9 +681,10 @@ npm run build
     <tr><td>Backend Compilation</td><td><span class="badge badge-green">SUCCESS</span></td><td><code>mvn clean package -DskipTests</code> passes cleanly</td></tr>
     <tr><td>Frontend Build</td><td><span class="badge badge-green">SUCCESS</span></td><td><code>npm run build</code> produces optimized production bundle</td></tr>
     <tr><td>API Contract</td><td><span class="badge badge-green">Validated</span></td><td>Jackson snake_case serialization matches React frontend expectations</td></tr>
-    <tr><td>Business Logic Fidelity</td><td><span class="badge badge-green">100%</span></td><td>All 13 COBOL programs' logic preserved in Java services</td></tr>
+    <tr><td>Program Mapping</td><td><span class="badge badge-green">13/13</span></td><td>Every COBOL program in scope has a documented modern implementation mapping</td></tr>
+    <tr><td>Focused Backend Tests</td><td><span class="badge badge-green">5 passed</span></td><td>PICRD100 validation, hotlist action parity, and STLMT100 validation covered by JUnit/Mockito tests</td></tr>
     <tr><td>Luhn Algorithm</td><td><span class="badge badge-green">Verified</span></td><td>Card numbers generated with BIN 400012, validated via Luhn check digit</td></tr>
-    <tr><td>Status Transition Matrix</td><td><span class="badge badge-green">Enforced</span></td><td>NW&rarr;AC, AC&rarr;BL, BL&rarr;AC, AC/BL/NW&rarr;CL, AC&rarr;HL all validated</td></tr>
+    <tr><td>Status Transition Matrix</td><td><span class="badge badge-green">Enforced</span></td><td>NW&rarr;AC, AC&rarr;BL, BL&rarr;AC, AC/BL/NW&rarr;CL; HL action stores BL</td></tr>
     <tr><td>Settlement Matching</td><td><span class="badge badge-green">O(n)</span></td><td>Sequential merge algorithm mirrors STLMT200.cbl exactly</td></tr>
     <tr><td>Fee Calculation</td><td><span class="badge badge-green">Accurate</span></td><td>1.75% interchange fee applied per STLMT300.cbl specification</td></tr>
     <tr><td>Offline Capability</td><td><span class="badge badge-green">Working</span></td><td>Full CRUD via localStorage when backend is unavailable</td></tr>
@@ -719,30 +721,29 @@ npm run build
   <div class="card-title" style="font-size:1.2rem;">Return on Investment</div>
   <div class="grid" style="margin-top:1rem;">
     <div style="text-align:center;padding:1rem;">
-      <div style="font-size:2.5rem;font-weight:bold;color:#155724;">480x</div>
-      <div style="font-size:0.9rem;color:#666;">Faster Delivery</div>
-      <div style="font-size:0.8rem;color:#999;">2 hours vs 960 hours (12 weeks)</div>
+      <div style="font-size:2.5rem;font-weight:bold;color:#155724;">61</div>
+      <div style="font-size:0.9rem;color:#666;">Committed Migration Files</div>
+      <div style="font-size:0.8rem;color:#999;">Measured against master</div>
     </div>
     <div style="text-align:center;padding:1rem;">
-      <div style="font-size:2.5rem;font-weight:bold;color:#155724;">99.97%</div>
-      <div style="font-size:0.9rem;color:#666;">Cost Reduction</div>
-      <div style="font-size:0.8rem;color:#999;">~$50 AI vs ~$160,000 manual</div>
+      <div style="font-size:2.5rem;font-weight:bold;color:#155724;">5/5</div>
+      <div style="font-size:0.9rem;color:#666;">Focused Parity Tests</div>
+      <div style="font-size:0.8rem;color:#999;">0 failures, 0 errors</div>
     </div>
     <div style="text-align:center;padding:1rem;">
-      <div style="font-size:2.5rem;font-weight:bold;color:#155724;">100%</div>
-      <div style="font-size:0.9rem;color:#666;">Business Logic Preserved</div>
-      <div style="font-size:0.8rem;color:#999;">13 COBOL programs &rarr; Java services</div>
+      <div style="font-size:2.5rem;font-weight:bold;color:#155724;">13/13</div>
+      <div style="font-size:0.9rem;color:#666;">Program Mappings Complete</div>
+      <div style="font-size:0.8rem;color:#999;">Core parity supported by 5 focused tests</div>
     </div>
     <div style="text-align:center;padding:1rem;">
-      <div style="font-size:2.5rem;font-weight:bold;color:#155724;">10,200+</div>
-      <div style="font-size:0.9rem;color:#666;">Lines of Production Code</div>
-      <div style="font-size:0.8rem;color:#999;">58 files across backend + frontend</div>
+      <div style="font-size:2.5rem;font-weight:bold;color:#155724;">12,002</div>
+      <div style="font-size:0.9rem;color:#666;">Committed Added Lines</div>
+      <div style="font-size:0.8rem;color:#999;">Includes code, config, lockfile, and docs</div>
     </div>
   </div>
   <div class="highlight" style="margin-top:1rem;">
     <strong>Bottom Line:</strong> Devin AI completed in ~2 hours what would traditionally require a 4-6 person team working 8-12 weeks, 
-    delivering a fully functional, production-grade application with comprehensive documentation, Wells Fargo POC theme, 
-    and zero critical defects at final delivery.
+    delivering a functional migration POC with comprehensive documentation and a Wells Fargo POC theme.
   </div>
 </div>
 
@@ -751,7 +752,7 @@ npm run build
 <div class="footer">
   <p><strong>Wells Fargo POC</strong> - Payments Division - Plastic Issuance &amp; Settlement</p>
   <p>Migrated from Mainframe COBOL to Java 21 + Spring Boot 3 + PostgreSQL 16 + React 18</p>
-  <p style="margin-top:0.5rem;font-size:0.8rem;">Generated March 2026 | All COBOL business logic preserved with 100% functional equivalence</p>
+  <p style="margin-top:0.5rem;font-size:0.8rem;">Updated July 2026 | 13/13 program mappings complete; 5/5 focused parity tests passing</p>
 </div>
 
 </body>

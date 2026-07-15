@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public class SettlementService {
 
     private static final BigDecimal INTERCHANGE_RATE = new BigDecimal("0.0175");
+    private static final Set<String> VALID_NETWORKS = Set.of("VISA", "MC", "STAR");
     private static final String[] NETWORKS = {"VISA", "MC", "STAR"};
     private static final String[] MERCHANT_NAMES = {
         "AMAZON MARKETPLACE", "WALMART STORES", "TARGET CORP",
@@ -53,10 +54,17 @@ public class SettlementService {
 
         for (SettlementTransaction txn : transactions) {
             try {
-                if (txn.getTxnAmount() == null || txn.getTxnAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                String networkId = txn.getNetworkId() == null ? "" : txn.getNetworkId().trim();
+                if (isBlank(txn.getTxnId())
+                        || isBlank(txn.getCardNumber())
+                        || txn.getTxnAmount() == null
+                        || txn.getTxnAmount().compareTo(BigDecimal.ZERO) <= 0
+                        || txn.getTxnDate() == null
+                        || !VALID_NETWORKS.contains(networkId)) {
                     rejected++;
                     continue;
                 }
+                txn.setNetworkId(networkId);
                 txn.setSettleId(datePrefix + String.format("%04d", seqNum++));
                 txn.setSettleStatus("PE");
                 txn.setSettleDate(LocalDate.now());
@@ -76,6 +84,10 @@ public class SettlementService {
         result.put("records_rejected", rejected);
         result.put("message", written + " transactions extracted, " + rejected + " rejected");
         return result;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     /**
