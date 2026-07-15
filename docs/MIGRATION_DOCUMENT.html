@@ -92,12 +92,12 @@
 <h2 id="overview">1. Executive Overview</h2>
 <div class="card">
   <div class="card-title">Migration Summary</div>
-  <p>This document details the complete migration of the <strong>Payments Division - Plastic Issuance &amp; Settlement</strong> 
+  <p>This document details the complete migration of the <strong>Payments Division - Plastic Issuance &amp; Settlement</strong>
   mainframe application from legacy COBOL/DB2/CICS/JCL to a modern Java 21 + Spring Boot 3 + PostgreSQL 16 + React 18 stack.</p>
   <br>
   <p><strong>Key Achievements:</strong></p>
   <ul style="margin-left:1.5rem;margin-top:0.5rem;">
-    <li>13 COBOL programs migrated to 3 Java service classes with full business logic preservation</li>
+    <li>13 COBOL programs mapped to Java services, with focused parity tests for corrected critical rules</li>
     <li>COBOL business fields mapped to typed JPA entity classes</li>
     <li>DB2 tables migrated to PostgreSQL 16 with H2 in-memory fallback for local development</li>
     <li>JCL batch jobs replaced with Spring Batch framework + REST-triggered pipelines</li>
@@ -479,8 +479,8 @@ BigDecimal netSettlement = matchedAmount.subtract(fees);</code></pre>
 
 <h3>9.3 localStorage Fallback</h3>
 <div class="highlight">
-  <strong>Offline Mode:</strong> When the backend is unavailable, the React application automatically falls back to localStorage 
-  for all data operations. This includes card CRUD, settlement data, and dashboard statistics. 
+  <strong>Offline Mode:</strong> When the backend is unavailable, the React application automatically falls back to localStorage
+  for all data operations. This includes card CRUD, settlement data, and dashboard statistics.
   The Luhn algorithm is duplicated in TypeScript for client-side card number generation.
 </div>
 
@@ -510,7 +510,7 @@ curl -X POST http://localhost:8000/api/batch/run-full-pipeline</code></pre>
   </div>
   <div class="card">
     <div class="card-title">Frontend (React + Vite)</div>
-    <pre><code># Prerequisites: Node.js 18+
+    <pre><code># Prerequisites: Node.js 20.19+
 cd frontend
 
 # Install dependencies
@@ -529,7 +529,18 @@ npm run build
   </div>
 </div>
 
-<h3>10.2 Test Scenarios</h3>
+<h3>10.2 Automated Checks</h3>
+<pre><code># Backend parity tests
+cd backend
+mvn test
+
+# Frontend static checks
+cd ../frontend
+npm run lint
+npm run build</code></pre>
+<p>Current result: 5 backend tests pass; frontend lint and production build complete successfully.</p>
+
+<h3>10.3 Test Scenarios</h3>
 <table>
   <thead><tr><th>#</th><th>Test Case</th><th>Expected Result</th></tr></thead>
   <tbody>
@@ -537,7 +548,7 @@ npm run build
     <tr><td>2</td><td>Issue New Card</td><td>16-digit card with BIN 400012, Luhn-valid, status NW</td></tr>
     <tr><td>3</td><td>Activate Card</td><td>Status changes NW &rarr; AC, activation_date set</td></tr>
     <tr><td>4</td><td>Block Card</td><td>Status changes AC &rarr; BL, history recorded</td></tr>
-    <tr><td>5</td><td>Invalid Transition (BL &rarr; HL)</td><td>Error: Invalid status transition</td></tr>
+    <tr><td>5</td><td>Hotlist action on a BL card</td><td>Error: Invalid status transition; HL is only valid on AC and stores BL</td></tr>
     <tr><td>6</td><td>Renew Expiring Cards</td><td>New cards issued, old cards marked EX</td></tr>
     <tr><td>7</td><td>Settlement Extract</td><td>20 transactions generated and persisted with PE status</td></tr>
     <tr><td>8</td><td>Transaction Matching</td><td>~80% matched (MT), ~10% unmatched (UM), ~10% disputed (DI)</td></tr>
@@ -606,7 +617,7 @@ npm run build
     <tr><td><strong>Total Elapsed Time</strong></td><td>~2 hours</td><td>8-12 weeks (2-3 months)</td><td style="color:#155724;font-weight:bold;">99%+ time reduction</td></tr>
     <tr><td><strong>Team Size Required</strong></td><td>1 AI agent</td><td>4-6 developers (Java, React, DBA, DevOps)</td><td style="color:#155724;font-weight:bold;">80-85% headcount reduction</td></tr>
     <tr><td><strong>Total Person-Hours</strong></td><td>~2 hours</td><td>640-1,920 hours (4-6 devs x 8-12 weeks)</td><td style="color:#155724;font-weight:bold;">99.7-99.9% effort reduction</td></tr>
-    <tr><td><strong>Repository Additions</strong></td><td>12,002 added lines across 61 migration files</td><td>Comparable scope would be required</td><td>Measured against <code>master</code>, including focused tests</td></tr>
+    <tr><td><strong>Repository Additions</strong></td><td>12,008 added lines across 61 migration files</td><td>Comparable scope would be required</td><td>Measured against <code>master</code>, including focused tests</td></tr>
     <tr><td><strong>Cost</strong></td><td>Not available in repository/session evidence</td><td>Depends on staffing, rates, and controls</td><td>No defensible percentage claimed</td></tr>
     <tr><td><strong>Defects Found During Review</strong></td><td>6 corrected: 3 sequence issues, issuance validation, hotlist mapping, settlement validation</td><td>Not measured</td><td>Five focused parity tests now guard the latest corrections</td></tr>
     <tr><td><strong>Documentation</strong></td><td>Auto-generated 600+ line HTML doc</td><td>1-2 weeks additional effort</td><td>Included at no extra cost</td></tr>
@@ -736,13 +747,13 @@ npm run build
       <div style="font-size:0.8rem;color:#999;">Core parity supported by 5 focused tests</div>
     </div>
     <div style="text-align:center;padding:1rem;">
-      <div style="font-size:2.5rem;font-weight:bold;color:#155724;">12,002</div>
+      <div style="font-size:2.5rem;font-weight:bold;color:#155724;">12,008</div>
       <div style="font-size:0.9rem;color:#666;">Committed Added Lines</div>
       <div style="font-size:0.8rem;color:#999;">Includes code, config, lockfile, and docs</div>
     </div>
   </div>
   <div class="highlight" style="margin-top:1rem;">
-    <strong>Bottom Line:</strong> Devin AI completed in ~2 hours what would traditionally require a 4-6 person team working 8-12 weeks, 
+    <strong>Bottom Line:</strong> Devin AI completed in ~2 hours what would traditionally require a 4-6 person team working 8-12 weeks,
     delivering a functional migration POC with comprehensive documentation and a Wells Fargo POC theme.
   </div>
 </div>
