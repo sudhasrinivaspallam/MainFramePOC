@@ -89,6 +89,19 @@ const bankingProducts = [
   "Business Line of Credit",
 ];
 
+function calculateRiskLevel(
+  application: BusinessApplication,
+): BusinessApplication["riskLevel"] {
+  if (application.compliance.highRiskActivity === "YES") return "HIGH";
+  if (
+    application.compliance.foreignOperations === "YES" ||
+    application.products.expectedBalance >= 500000
+  ) {
+    return "MEDIUM";
+  }
+  return "LOW";
+}
+
 const transactionChannels = ["Online", "ACH", "Wire", "Card", "Check", "Cash"];
 
 function Field({
@@ -253,15 +266,8 @@ export default function OnboardingWizardPage() {
   const saveDraft = (auditDetail?: string) => {
     setSaveState("saving");
     try {
-      const riskLevel =
-        draft.compliance.highRiskActivity === "YES"
-          ? "HIGH"
-          : draft.compliance.foreignOperations === "YES" ||
-              draft.products.expectedBalance >= 500000
-            ? "MEDIUM"
-            : "LOW";
       const saved = persistApplication(
-        { ...draft, riskLevel },
+        { ...draft, riskLevel: calculateRiskLevel(draft) },
         auditDetail,
       );
       setDraft(saved);
@@ -292,6 +298,7 @@ export default function OnboardingWizardPage() {
       ...draft,
       completedSteps,
       currentStep: nextStep,
+      riskLevel: calculateRiskLevel(draft),
     };
     setDraft(nextDraft);
     const saved = persistApplication(
@@ -331,6 +338,7 @@ export default function OnboardingWizardPage() {
     const timestamp = new Date().toISOString();
     const submitted: BusinessApplication = {
       ...draft,
+      riskLevel: calculateRiskLevel(draft),
       status: "SUBMITTED",
       submittedAt: timestamp,
       updatedAt: timestamp,
