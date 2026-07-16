@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migration Proof Report — COBOL to Java Parity Evidence</title>
+    <style>
+        :root {
+            --wf-red: #D71E28;
+            --wf-dark-red: #B31B1B;
+            --wf-yellow: #FFCD41;
+            --wf-dark: #1A1A2E;
+            --wf-gray: #F5F5F5;
+            --wf-border: #E0E0E0;
+            --green: #2E7D32;
+            --green-bg: #E8F5E9;
+            --orange: #E65100;
+            --orange-bg: #FFF3E0;
+            --blue: #1565C0;
+            --blue-bg: #E3F2FD;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--wf-gray);
+            color: #333;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--wf-dark) 0%, #2D2D4E 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.2em; margin-bottom: 8px; }
+        .header .subtitle { color: var(--wf-yellow); font-size: 1.2em; font-weight: 600; }
+        .header .meta { margin-top: 12px; opacity: 0.8; font-size: 0.95em; }
+        .verdict-banner {
+            background: var(--green);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 1.4em;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .verdict-banner .score { font-size: 2em; display: block; margin-bottom: 4px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .nav-bar {
+            background: white;
+            border-bottom: 3px solid var(--wf-red);
+            padding: 0 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .nav-bar ul { list-style: none; display: flex; flex-wrap: wrap; gap: 0; }
+        .nav-bar a {
+            display: block;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.85em;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav-bar a:hover, .nav-bar a.active {
+            color: var(--wf-red);
+            border-bottom-color: var(--wf-red);
+        }
+        section {
+            background: white;
+            margin: 20px 0;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        h2 {
+            color: var(--wf-dark);
+            font-size: 1.6em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--wf-red);
+        }
+        h3 {
+            color: var(--wf-dark);
+            font-size: 1.2em;
+            margin: 24px 0 12px;
+        }
+        h4 { color: #555; margin: 16px 0 8px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 20px;
+            font-size: 0.92em;
+        }
+        th {
+            background: var(--wf-dark);
+            color: white;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--wf-border);
+            vertical-align: top;
+        }
+        tr:nth-child(even) { background: #FAFAFA; }
+        tr:hover { background: #F0F0F0; }
+        code {
+            background: #F5F5F5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--wf-dark);
+        }
+        pre {
+            background: #1E1E2E;
+            color: #CDD6F4;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 0.85em;
+            line-height: 1.5;
+            margin: 10px 0;
+        }
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+        .status-pass {
+            background: var(--green);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+        .status-equiv {
+            background: var(--blue);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+        .status-na {
+            background: #757575;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+        .comparison-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .comparison-box .cobol-side, .comparison-box .java-side {
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .comparison-box .cobol-side { border: 2px solid #E65100; }
+        .comparison-box .java-side { border: 2px solid var(--green); }
+        .comparison-box .side-header {
+            padding: 8px 12px;
+            font-weight: 700;
+            font-size: 0.9em;
+        }
+        .cobol-side .side-header { background: var(--orange-bg); color: var(--orange); }
+        .java-side .side-header { background: var(--green-bg); color: var(--green); }
+        .comparison-box pre { margin: 0; border-radius: 0; }
+        .info-box {
+            padding: 16px 20px;
+            border-radius: 6px;
+            margin: 16px 0;
+            border-left: 4px solid;
+        }
+        .info-box.success { background: var(--green-bg); border-color: var(--green); }
+        .info-box.info { background: var(--blue-bg); border-color: var(--blue); }
+        .info-box.warn { background: var(--orange-bg); border-color: var(--orange); }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+        .summary-card {
+            background: white;
+            border: 2px solid var(--wf-border);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .summary-card .number {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--green);
+        }
+        .summary-card .label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 4px;
+        }
+        .summary-card.highlight { border-color: var(--green); background: var(--green-bg); }
+        .arrow { color: var(--wf-red); font-weight: 700; font-size: 1.2em; }
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        @media (max-width: 768px) {
+            .comparison-box { grid-template-columns: 1fr; }
+            .summary-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ HEADER ═══════════════════════════════════ -->
+<div class="header">
+    <h1>Migration Proof Report</h1>
+    <div class="subtitle">COBOL Mainframe &rarr; Java 21 + Spring Boot 3 &mdash; Same-to-Same Implementation Evidence</div>
+    <div class="meta">Wells Fargo Payments Division &bull; Plastic Issuance &amp; Settlement Systems &bull; Updated July 2026</div>
+</div>
+
+<div class="verdict-banner">
+    <span class="score">13 / 13 Programs Migrated</span>
+    Critical business rules mapped, corrected, and covered by focused automated tests
+</div>
+
+<nav class="nav-bar">
+    <ul>
+        <li><a href="#executive-summary">Executive Summary</a></li>
+        <li><a href="#program-mapping">Program Mapping</a></li>
+        <li><a href="#business-rules">Business Rules</a></li>
+        <li><a href="#data-mapping">Data Mapping</a></li>
+        <li><a href="#code-evidence">Code Evidence</a></li>
+        <li><a href="#ui-mapping">UI Mapping</a></li>
+        <li><a href="#tech-stack">Tech Stack</a></li>
+        <li><a href="#gaps">Gaps &amp; Notes</a></li>
+    </ul>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════════════ EXECUTIVE SUMMARY ═══════════════════════════════ -->
+<section id="executive-summary">
+    <h2>1. Executive Summary</h2>
+
+    <div class="summary-grid">
+        <div class="summary-card highlight">
+            <div class="number">13</div>
+            <div class="label">COBOL Programs Migrated</div>
+        </div>
+        <div class="summary-card highlight">
+            <div class="number">7</div>
+            <div class="label">Copybooks &rarr; JPA Entities</div>
+        </div>
+        <div class="summary-card highlight">
+            <div class="number">10</div>
+            <div class="label">Business Rules Preserved</div>
+        </div>
+        <div class="summary-card highlight">
+            <div class="number">5</div>
+            <div class="label">Automated Parity Tests Passing</div>
+        </div>
+    </div>
+
+    <div class="info-box success">
+        <strong>Verification Result: CORE IMPLEMENTATION PARITY</strong><br>
+        All 13 COBOL programs (6 Plastic Issuance + 4 Settlement + 2 Online + 1 Data Loader) have been migrated to Java 21 + Spring Boot 3.
+        Code review confirms direct mappings for card issuance validation, the Luhn algorithm, status transition matrix, settlement input validation, O(n) sequential matching,
+        1.75% interchange fees, and 60-day renewal window. Five focused Java tests verify issuance validation, hotlist behavior, and settlement validation.
+        Database entities preserve the business fields from the COBOL copybooks.
+    </div>
+
+    <h3>What This Report Proves</h3>
+    <p>This document provides program mappings, side-by-side source evidence, and focused automated tests for the migrated implementation.
+    It demonstrates implementation parity for the documented core rules; it is not a byte-for-byte COBOL/Java differential execution certificate.
+    For each program, we show:</p>
+    <ul style="margin: 10px 0 0 20px;">
+        <li>The original COBOL program name, purpose, and key logic</li>
+        <li>The corresponding Java service method with the same logic</li>
+        <li>Side-by-side code comparisons of critical algorithms</li>
+        <li>Data structure mapping (COBOL copybook fields &rarr; JPA entity columns)</li>
+        <li>Business rule verification with code evidence and focused Java tests</li>
+    </ul>
+</section>
+
+<!-- ═══════════════════════════════ PROGRAM-BY-PROGRAM MAPPING ═══════════════════════════════ -->
+<section id="program-mapping">
+    <h2>2. Program-by-Program Mapping (13/13)</h2>
+
+    <h3>Plastic Issuance Programs (6 programs)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>COBOL Program</th>
+                <th>Description</th>
+                <th>Java Equivalent</th>
+                <th>File &amp; Method</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td><code>PILOAD0.cbl</code></td>
+                <td>Load 10 sample cards with Luhn-valid numbers into master file</td>
+                <td><code>CardService</code></td>
+                <td><code>CardService.java → loadSampleData()</code><br>Lines 293-366</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td><code>PICRD100.cbl</code><br>(522 lines)</td>
+                <td>Card Issuance &mdash; reads input, validates, generates Luhn card numbers, INSERTs into DB2</td>
+                <td><code>CardService</code> + <code>LuhnUtil</code></td>
+                <td><code>CardService.java → issueCard()</code><br>Lines 78-100<br><code>LuhnUtil.java → generateCardNumber()</code><br>Lines 35-40</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td><code>PICRD200.cbl</code><br>(381 lines)</td>
+                <td>Card Activation &mdash; validates NW status, customer ID match, transitions NW&rarr;AC, sets PIN offset</td>
+                <td><code>CardService</code></td>
+                <td><code>CardService.java → activateCard()</code><br>Lines 106-126</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td><code>PICRD300.cbl</code><br>(408 lines)</td>
+                <td>Card Status Update &mdash; enforces transition matrix (BL/UB/CL/HL), writes history audit trail</td>
+                <td><code>CardService</code></td>
+                <td><code>CardService.java → updateCardStatus()</code><br>Lines 132-156<br>Transition matrix: Lines 29-37</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td><code>PICRD400.cbl</code><br>(334 lines)</td>
+                <td>Card Renewal &mdash; cursor-driven scan for cards expiring within 60 days, issues replacement with new Luhn number</td>
+                <td><code>CardService</code></td>
+                <td><code>CardService.java → renewCards()</code><br>Lines 163-219</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td><code>GENDATA.cbl</code></td>
+                <td>Generate 7 test input data files (CARDINP, ACTVINP, STSINP, TXNINP, ACQFILE, INQINP, UPDINP)</td>
+                <td><code>SettlementService</code> + <code>CardService</code></td>
+                <td><code>SettlementService.java → generateSampleTransactions()</code><br>Lines 341-362<br><code>generateSampleConfirmations()</code><br>Lines 365-391</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Online / Interactive Programs (2 programs)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>COBOL Program</th>
+                <th>Description</th>
+                <th>Java + React Equivalent</th>
+                <th>Files</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>7</td>
+                <td><code>PIONL100.cbl</code><br>(CICS PISCR01)</td>
+                <td>Card Inquiry &mdash; BMS 3270 screen, SELECT from DB2, display card details</td>
+                <td><code>CardController</code> + <code>CardDetail.tsx</code></td>
+                <td>Backend: <code>CardController.java → GET /api/cards/{number}</code><br>
+                    <code>CardService.java → getCard()</code> Line 222<br>
+                    Frontend: <code>CardDetail.tsx</code>, <code>CardList.tsx</code></td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td><code>PIONL200.cbl</code><br>(CICS PISCR02)</td>
+                <td>Card Update &mdash; BMS screen, two-phase lookup+edit, UPDATE address/limits in DB2</td>
+                <td><code>CardController</code> + <code>CardDetail.tsx</code></td>
+                <td>Backend: <code>CardController.java → PUT /api/cards/{number}</code><br>
+                    <code>CardService.java → updateCard()</code> Lines 240-257<br>
+                    Frontend: <code>CardDetail.tsx</code> (edit mode)</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Settlement Programs (5 programs)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>COBOL Program</th>
+                <th>Description</th>
+                <th>Java Equivalent</th>
+                <th>File &amp; Method</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>9</td>
+                <td><code>STLMT100.cbl</code><br>(405 lines)</td>
+                <td>Settlement Extract &mdash; reads network txns, validates (amount&gt;0, valid network), assigns settle_id (YYYYMMDD+seq), writes to VSAM with status PE</td>
+                <td><code>SettlementService</code></td>
+                <td><code>SettlementService.java → extractTransactions()</code><br>Lines 47-79</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td><code>STLSORT.cbl</code></td>
+                <td>VSAM-to-Sequential copy &mdash; replaces DFSORT REPRO, copies indexed VSAM to sorted sequential file</td>
+                <td>SQL <code>ORDER BY</code></td>
+                <td>Not needed &mdash; PostgreSQL/H2 handles sorting natively via <code>ORDER BY txn_id</code> in repository queries</td>
+                <td><span class="status-equiv">EQUIVALENT</span></td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td><code>STLMT200.cbl</code><br>(361 lines)</td>
+                <td>Transaction Matching &mdash; O(n) two-file sequential merge algorithm, compares settlement vs acquirer by txn_id, produces matched/unmatched/disputed</td>
+                <td><code>SettlementService</code></td>
+                <td><code>SettlementService.java → matchTransactions()</code><br>Lines 86-162</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td><code>STLMT300.cbl</code><br>(301 lines)</td>
+                <td>Net Settlement &mdash; aggregates by network (VISA/MC/STAR), calculates fees, computes net settlement, writes summary to VSAM</td>
+                <td><code>SettlementService</code></td>
+                <td><code>SettlementService.java → calculateNetSettlement()</code><br>Lines 168-256</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>13</td>
+                <td><code>STLMT400.cbl</code><br>(264 lines)</td>
+                <td>Management Report + SAS CSV feed &mdash; reads summary VSAM, generates formatted report, produces CSV for analytics</td>
+                <td><code>SettlementService</code></td>
+                <td><code>SettlementService.java → generateManagementReport()</code><br>Lines 261-318<br>CSV output: Lines 273-297</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- ═══════════════════════════════ BUSINESS RULES VERIFICATION ═══════════════════════════════ -->
+<section id="business-rules">
+    <h2>3. Business Rules Verification (10/10)</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Business Rule</th>
+                <th>COBOL Implementation</th>
+                <th>Java Implementation</th>
+                <th>Verified</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Card Issuance Validation</strong><br>Require DB/PP card type, account, customer ID, and customer name</td>
+                <td><code>PICRD100.cbl</code> lines 276-311<br>Validates request fields before card-number generation</td>
+                <td><code>CardService.issueCard()</code><br>Validates the same business fields; separate issue/renew endpoints represent NC/RC request routing</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td><strong>Luhn Card Number Generation</strong><br>BIN 400012 + 9-digit seq + check digit</td>
+                <td><code>PICRD100.cbl</code> lines 317-348<br>COMPUTE with DIVIDE/MULTIPLY, MOD-10</td>
+                <td><code>LuhnUtil.java</code> lines 17-29, 35-40<br><code>calculateLuhnCheckDigit()</code> + <code>generateCardNumber()</code></td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td><strong>Status Transition Matrix</strong><br>NW&rarr;AC, AC&rarr;BL, BL&rarr;AC, AC/BL/NW&rarr;CL; hotlist action HL maps AC&rarr;BL</td>
+                <td><code>PICRD300.cbl</code> lines 240-276<br>EVALUATE TRUE / WHEN blocks</td>
+                <td><code>CardService.java</code> lines 29-37<br><code>VALID_TRANSITIONS</code> Set + <code>ACTION_STATUS_MAP</code></td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td><strong>60-Day Renewal Window</strong><br>Find AC cards with expiry &le; today+60</td>
+                <td><code>PICRD400.cbl</code> lines 137-155<br>INTEGER-OF-DATE + ADD 60 + DATE-OF-INTEGER</td>
+                <td><code>CardService.java</code> line 165<br><code>LocalDate.now().plusDays(cutoffDays)</code></td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td><strong>O(n) Sequential Matching</strong><br>Two-pointer merge on sorted txn_id</td>
+                <td><code>STLMT200.cbl</code> lines 200-226<br>EVALUATE with key comparison, advance pointers</td>
+                <td><code>SettlementService.java</code> lines 102-152<br>while-loop with <code>compareTo()</code>, advance si/ai</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td><strong>Settlement Input Validation</strong><br>Reject blank transaction/card IDs, zero amounts, blank dates, and unsupported networks</td>
+                <td><code>STLMT100.cbl</code> lines 221-255<br>Validates transaction ID, card number, amount, date, and VISA/MC/STAR network</td>
+                <td><code>SettlementService.extractTransactions()</code><br>Validates the same fields and normalizes padded <code>MC&nbsp;&nbsp;</code> to <code>MC</code></td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td><strong>Network Aggregation</strong><br>Group by VISA/MC/STAR, accumulate totals</td>
+                <td><code>STLMT300.cbl</code> lines 188-206<br>EVALUATE network, accumulate into table</td>
+                <td><code>SettlementService.java</code> lines 177-178<br><code>Collectors.groupingBy(SettlementTransaction::getNetworkId)</code></td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td><strong>1.75% Interchange Fee</strong><br>Fee = matched_amount &times; 0.0175</td>
+                <td><code>STLMT300.cbl</code> lines 239-244<br>COMPUTE fee from accumulated amounts</td>
+                <td><code>SettlementService.java</code> lines 25, 222-223<br><code>INTERCHANGE_RATE = 0.0175</code>, multiply + HALF_UP rounding</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td><strong>SAS CSV Feed</strong><br>Comma-delimited output for analytics</td>
+                <td><code>STLMT400.cbl</code> lines 151-166<br>STRING/UNSTRING with comma delimiters</td>
+                <td><code>SettlementService.java</code> lines 273-297<br>StringBuilder CSV with header + data rows</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td><strong>History Audit Trail</strong><br>Record every status change with timestamp</td>
+                <td><code>PICRD300.cbl</code> lines 313-336<br>INSERT INTO TB_CARD_STATUS_HISTORY</td>
+                <td><code>CardService.java</code> lines 381-389<br><code>recordHistory()</code> &rarr; <code>historyRepo.save()</code></td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Automated Test Evidence</h3>
+    <table>
+        <thead>
+            <tr><th>Test</th><th>COBOL Rule Covered</th><th>Result</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>CardServiceTest.issueCardRejectsTheSameRequiredFieldsAsPicrd100</code></td>
+                <td>Invalid card type and blank account/customer/name fields are rejected before persistence</td>
+                <td><span class="status-pass">PASS</span></td>
+            </tr>
+            <tr>
+                <td><code>CardServiceTest.hotlistActionBlocksActiveCardLikePicrd300</code></td>
+                <td>HL action on an active card stores status <code>BL</code> and writes the audit history</td>
+                <td><span class="status-pass">PASS</span></td>
+            </tr>
+            <tr>
+                <td><code>CardServiceTest.hotlistActionRejectsNonActiveCardLikePicrd300</code></td>
+                <td>HL action is rejected unless current status is <code>AC</code></td>
+                <td><span class="status-pass">PASS</span></td>
+            </tr>
+            <tr>
+                <td><code>SettlementServiceTest.extractAcceptsAndNormalizesValidCobolNetworkRecord</code></td>
+                <td>Valid <code>MC&nbsp;&nbsp;</code> record is accepted, normalized, sequenced, and marked <code>PE</code></td>
+                <td><span class="status-pass">PASS</span></td>
+            </tr>
+            <tr>
+                <td><code>SettlementServiceTest.extractRejectsTheSameInvalidFieldsAsStlmt100</code></td>
+                <td>Blank IDs, zero amount, blank date, and invalid network are rejected</td>
+                <td><span class="status-pass">PASS</span></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="info-box info">
+        <strong>Command evidence:</strong> <code>mvn test</code> &mdash; Tests run: 5, Failures: 0, Errors: 0, Skipped: 0.
+    </div>
+</section>
+
+<!-- ═══════════════════════════════ CODE EVIDENCE ═══════════════════════════════ -->
+<section id="code-evidence">
+    <h2>4. Side-by-Side Code Evidence</h2>
+
+    <h3>4.1 Luhn Check Digit Algorithm (PICRD100 &rarr; LuhnUtil)</h3>
+    <div class="comparison-box">
+        <div class="cobol-side">
+            <div class="side-header">COBOL &mdash; PICRD100.cbl (lines 317-348)</div>
+            <pre><code>       2300-GENERATE-CARD-NUMBER.
+           ADD 1 TO WS-CARD-SEQ-NUM
+           STRING WS-BIN-PREFIX
+                  WS-CARD-SEQ-NUM
+               DELIMITED BY SIZE
+               INTO WS-GENERATED-CARD-NUM
+           END-STRING
+
+      *    CALCULATE LUHN CHECK DIGIT
+           MOVE ZEROS TO WS-LUHN-SUM
+           PERFORM VARYING WS-LUHN-IDX FROM 1 BY 1
+               UNTIL WS-LUHN-IDX > 15
+               COMPUTE WS-LUHN-DIGIT =
+                   FUNCTION ORD(
+                       WS-GENERATED-CARD-NUM(WS-LUHN-IDX:1)) - 48
+               IF FUNCTION MOD(WS-LUHN-IDX, 2) = 1
+                   COMPUTE WS-LUHN-TEMP = WS-LUHN-DIGIT * 2
+                   IF WS-LUHN-TEMP > 9
+                       SUBTRACT 9 FROM WS-LUHN-TEMP
+                   END-IF
+                   ADD WS-LUHN-TEMP TO WS-LUHN-SUM
+               ELSE
+                   ADD WS-LUHN-DIGIT TO WS-LUHN-SUM
+               END-IF
+           END-PERFORM
+
+           COMPUTE WS-CHECK-DIGIT =
+               FUNCTION MOD(
+                 (10 - FUNCTION MOD(WS-LUHN-SUM, 10)), 10)
+           MOVE WS-CHECK-DIGIT TO
+               WS-GENERATED-CARD-NUM(16:1)</code></pre>
+        </div>
+        <div class="java-side">
+            <div class="side-header">Java &mdash; LuhnUtil.java (lines 17-40)</div>
+            <pre><code>public static int calculateLuhnCheckDigit(String partial) {
+    int[] digits = partial.chars()
+        .map(c -> c - '0').toArray();
+    int total = 0;
+    for (int i = digits.length - 1; i >= 0; i--) {
+        int d = digits[i];
+        if ((digits.length - 1 - i) % 2 == 0) {
+            d *= 2;
+            if (d > 9) d -= 9;
+        }
+        total += d;
+    }
+    return (10 - (total % 10)) % 10;
+}
+
+public static String generateCardNumber(int sequence) {
+    String seqStr = String.format("%09d", sequence);
+    String partial = BIN_PREFIX + seqStr;  // "400012"
+    int checkDigit = calculateLuhnCheckDigit(partial);
+    return partial + checkDigit;
+}</code></pre>
+        </div>
+    </div>
+    <div class="info-box success">
+        <strong>Algorithm Match:</strong> Both implementations iterate over the first 15 digits, double every alternate digit, subtract 9 if &gt;9, sum all digits,
+        and compute check = (10 - sum%10) % 10. BIN prefix "400012" is identical. Produces identical card numbers for the same sequence input.
+    </div>
+
+    <h3>4.2 Status Transition Matrix (PICRD300 &rarr; CardService)</h3>
+    <div class="comparison-box">
+        <div class="cobol-side">
+            <div class="side-header">COBOL &mdash; PICRD300.cbl (lines 240-276)</div>
+            <pre><code>           EVALUATE TRUE
+               WHEN WS-STS-ACT-BLOCK
+                   IF HV-CURRENT-STATUS = 'AC'
+                       MOVE 'BL' TO HV-NEW-STATUS
+                   ELSE
+                       MOVE 'CANNOT BLOCK - NOT ACTIVE'
+                           TO WS-ERR-MESSAGE
+                       SET WS-INVALID-TRANSITION TO TRUE
+                   END-IF
+               WHEN WS-STS-ACT-UNBLOCK
+                   IF HV-CURRENT-STATUS = 'BL'
+                       MOVE 'AC' TO HV-NEW-STATUS
+                   ELSE
+                       MOVE 'CANNOT UNBLOCK - NOT BLOCKED'
+                           TO WS-ERR-MESSAGE
+                       SET WS-INVALID-TRANSITION TO TRUE
+                   END-IF
+               WHEN WS-STS-ACT-CLOSE
+                   IF HV-CURRENT-STATUS = 'AC'
+                      OR HV-CURRENT-STATUS = 'NW'
+                      OR HV-CURRENT-STATUS = 'BL'
+                       MOVE 'CL' TO HV-NEW-STATUS
+                   ELSE
+                       ...SET WS-INVALID-TRANSITION
+                   END-IF
+               WHEN WS-STS-ACT-HOTLIST
+                   IF HV-CURRENT-STATUS = 'AC'
+                       MOVE 'BL' TO HV-NEW-STATUS
+                   ELSE
+                       ...SET WS-INVALID-TRANSITION
+                   END-IF
+           END-EVALUATE</code></pre>
+        </div>
+        <div class="java-side">
+            <div class="side-header">Java &mdash; CardService.java (lines 29-47, 132-156)</div>
+            <pre><code>// Transition matrix (same rules as COBOL EVALUATE)
+private static final Set&lt;String&gt; VALID_TRANSITIONS = Set.of(
+    "NW-AC",  // Activate new card
+    "AC-BL",  // Block active card
+    "BL-AC",  // Unblock blocked card
+    "AC-CL",  // Close active card
+    "BL-CL",  // Close blocked card
+    "NW-CL"   // Close new card
+);
+
+private static final Map&lt;String, String&gt; ACTION_STATUS_MAP =
+    Map.of(
+        "BL", "BL",  // Block
+        "UB", "AC",  // Unblock
+        "CL", "CL",  // Close
+        "HL", "BL"   // Hotlist
+    );
+
+// Validation logic
+String transition = card.getCardStatus() + "-" + targetStatus;
+if (!VALID_TRANSITIONS.contains(transition)) {
+    throw new IllegalStateException(
+        "Invalid status transition: " + ...);
+}</code></pre>
+        </div>
+    </div>
+    <div class="info-box success">
+        <strong>Transition Matrix Match:</strong> Both allow BL (AC&rarr;BL), UB (BL&rarr;AC), and CL (AC/BL/NW&rarr;CL).
+        The HL action also changes an active card to <code>BL</code>, exactly as <code>PICRD300.cbl</code> does; HL is an action code, not a stored card status.
+        COBOL uses EVALUATE/WHEN blocks; Java uses a Set of valid "FROM-TO" pairs.
+    </div>
+
+    <h3>4.3 O(n) Sequential Matching (STLMT200 &rarr; SettlementService)</h3>
+    <div class="comparison-box">
+        <div class="cobol-side">
+            <div class="side-header">COBOL &mdash; STLMT200.cbl (lines 200-226)</div>
+            <pre><code>       2000-MATCH-PROCESS.
+           PERFORM UNTIL WS-STL-EOF AND WS-ACQ-EOF
+               EVALUATE TRUE
+                   WHEN WS-STL-EOF AND NOT WS-ACQ-EOF
+                       PERFORM 2500-UNMATCHED-ACQUIRER
+                       PERFORM 2200-READ-ACQUIRER
+                   WHEN NOT WS-STL-EOF AND WS-ACQ-EOF
+                       PERFORM 2400-UNMATCHED-SETTLEMENT
+                       PERFORM 2100-READ-VSAM
+                   WHEN NOT WS-STL-EOF AND NOT WS-ACQ-EOF
+                       EVALUATE TRUE
+                         WHEN WS-MATCH-KEY-STL =
+                              WS-MATCH-KEY-ACQ
+                           PERFORM 2300-MATCH-FOUND
+                           PERFORM 2100-READ-VSAM
+                           PERFORM 2200-READ-ACQUIRER
+                         WHEN WS-MATCH-KEY-STL <
+                              WS-MATCH-KEY-ACQ
+                           PERFORM 2400-UNMATCHED-SETTLEMENT
+                           PERFORM 2100-READ-VSAM
+                         WHEN OTHER
+                           PERFORM 2500-UNMATCHED-ACQUIRER
+                           PERFORM 2200-READ-ACQUIRER
+                       END-EVALUATE
+               END-EVALUATE
+           END-PERFORM</code></pre>
+        </div>
+        <div class="java-side">
+            <div class="side-header">Java &mdash; SettlementService.java (lines 102-152)</div>
+            <pre><code>while (si < pendingTxns.size()
+    && ai < acquirerConfirmations.size()) {
+
+    String stlKey = pendingTxns.get(si).getTxnId();
+    String acqKey = (String) acq.get("txn_id");
+    int cmp = stlKey.compareTo(acqKey);
+
+    if (cmp == 0) {
+        // Keys match - check amounts
+        if (stl.getTxnAmount().compareTo(acqAmount) == 0) {
+            stl.setSettleStatus("MT"); // Matched
+            matchedCount++;
+        } else {
+            stl.setSettleStatus("DI"); // Disputed
+            amountMismatch++;
+        }
+        si++; ai++;
+    } else if (cmp < 0) {
+        // Settlement has no matching acquirer
+        stl.setSettleStatus("UM"); // Unmatched
+        unmatchedSettlement++;
+        si++;
+    } else {
+        // Acquirer has no matching settlement
+        unmatchedAcquirer++;
+        ai++;
+    }
+}
+// Drain remaining records as unmatched
+while (si < pendingTxns.size()) { ... }
+while (ai < acquirerConfirmations.size()) { ... }</code></pre>
+        </div>
+    </div>
+    <div class="info-box success">
+        <strong>Algorithm Match:</strong> Both use the classic two-pointer merge-join: sort both files by txn_id, compare keys, advance the smaller pointer.
+        Three outcomes preserved: Matched (MT), Unmatched Settlement (UM), Unmatched Acquirer. COBOL also checks amount for Disputed (DI) in 2300-MATCH-FOUND &mdash; Java does the same inside <code>cmp == 0</code>.
+    </div>
+
+    <h3>4.4 Card Activation Validation (PICRD200 &rarr; CardService)</h3>
+    <div class="comparison-box">
+        <div class="cobol-side">
+            <div class="side-header">COBOL &mdash; PICRD200.cbl (lines 207-252)</div>
+            <pre><code>       2200-VALIDATE-AND-FETCH.
+           EXEC SQL
+               SELECT CARD_STATUS, CUSTOMER_ID
+               INTO :HV-CARD-STATUS, :HV-CUSTOMER-ID
+               FROM TB_CARD_MASTER
+               WHERE CARD_NUMBER = :HV-CARD-NUMBER
+           END-EXEC
+
+           EVALUATE SQLCODE
+               WHEN 0
+                   IF HV-CARD-STATUS NOT = 'NW'
+                       ... 'CARD NOT IN NEW STATUS'
+                       SET WS-STOP-PROCESS TO TRUE
+                   END-IF
+                   IF HV-CUSTOMER-ID NOT =
+                      WS-ACTV-CUSTOMER-ID
+                       MOVE 'CUSTOMER ID MISMATCH'
+                       SET WS-STOP-PROCESS TO TRUE
+                   END-IF
+               WHEN 100
+                   MOVE 'CARD NOT FOUND IN DATABASE'
+                   SET WS-STOP-PROCESS TO TRUE
+           END-EVALUATE</code></pre>
+        </div>
+        <div class="java-side">
+            <div class="side-header">Java &mdash; CardService.java (lines 107-126)</div>
+            <pre><code>public CardMaster activateCard(String cardNumber,
+    String customerId, String pinOffset, String channel) {
+
+    CardMaster card = cardRepo.findById(cardNumber)
+        .orElseThrow(() -> new IllegalArgumentException(
+            "Card not found: " + cardNumber));
+
+    if (!"NW".equals(card.getCardStatus())) {
+        throw new IllegalStateException(
+            "Card must be in NW status to activate."
+            + " Current: " + card.getCardStatus());
+    }
+    if (!card.getCustomerId().equals(customerId)) {
+        throw new IllegalArgumentException(
+            "Customer ID does not match card record");
+    }
+
+    card.setCardStatus("AC");
+    card.setActivationDate(LocalDate.now());
+    if (pinOffset != null) card.setPinOffset(pinOffset);
+    CardMaster saved = cardRepo.save(card);
+
+    recordHistory(cardNumber, prevStatus, "AC",
+        "ACTIVATE", channel);
+    return saved;
+}</code></pre>
+        </div>
+    </div>
+    <div class="info-box success">
+        <strong>Validation Match:</strong> Both perform the same 3 checks: (1) card exists in DB, (2) status must be 'NW', (3) customer ID must match.
+        Both set status to 'AC', record activation date, and save PIN offset. COBOL uses SQLCODE 0/100; Java uses Optional.orElseThrow().
+    </div>
+
+    <h3>4.5 Settlement Extract &mdash; Settle ID Generation (STLMT100 &rarr; SettlementService)</h3>
+    <div class="comparison-box">
+        <div class="cobol-side">
+            <div class="side-header">COBOL &mdash; STLMT100.cbl (lines 260-300)</div>
+            <pre><code>       2300-FORMAT-SETTLEMENT-REC.
+           ADD 1 TO WS-SETTLE-SEQ
+
+      *    GENERATE SETTLEMENT ID: DATE + SEQ
+           STRING WS-CURRENT-YEAR
+                  WS-CURRENT-MONTH
+                  WS-CURRENT-DAY
+                  WS-SETTLE-SEQ
+               DELIMITED BY SIZE
+               INTO WS-ST-SETTLE-ID
+           END-STRING
+
+           MOVE 'PE' TO WS-ST-SETTLE-STATUS
+           MOVE WS-SETTLE-DATE TO WS-ST-SETTLE-DATE
+           MOVE WS-SETTLE-SEQ TO WS-ST-BATCH-SEQ-NUM</code></pre>
+        </div>
+        <div class="java-side">
+            <div class="side-header">Java &mdash; SettlementService.java (lines 51-63)</div>
+            <pre><code>int seqNum = txnRepo.findMaxBatchSeqNum() + 1;
+String datePrefix = LocalDate.now()
+    .format(DateTimeFormatter.BASIC_ISO_DATE);
+
+for (SettlementTransaction txn : transactions) {
+    // GENERATE SETTLEMENT ID: YYYYMMDD + SEQ
+    txn.setSettleId(
+        datePrefix + String.format("%04d", seqNum++));
+    txn.setSettleStatus("PE");
+    txn.setSettleDate(LocalDate.now());
+    txn.setBatchSeqNum(seqNum - 1);
+    txnRepo.save(txn);
+}</code></pre>
+        </div>
+    </div>
+    <div class="info-box success">
+        <strong>ID Generation Match:</strong> Both create settle_id as YYYYMMDD + sequence number. Both set initial status to "PE" (Pending). Both assign batch sequence number.
+    </div>
+
+    <h3>4.6 Card Renewal &mdash; 60-Day Window (PICRD400 &rarr; CardService)</h3>
+    <div class="comparison-box">
+        <div class="cobol-side">
+            <div class="side-header">COBOL &mdash; PICRD400.cbl (lines 128-168, 281-288)</div>
+            <pre><code>      * CALCULATE CUTOFF DATE (CURRENT + 60 DAYS)
+           COMPUTE WS-CALC-YYYYMMDD =
+               (WS-CURRENT-YEAR * 10000) +
+               (WS-CURRENT-MONTH * 100) + WS-CURRENT-DAY
+           COMPUTE WS-CALC-INTEGER-DATE =
+               FUNCTION INTEGER-OF-DATE(WS-CALC-YYYYMMDD)
+           ADD WS-LOOK-AHEAD-DAYS TO WS-CALC-INTEGER-DATE
+           COMPUTE WS-CALC-YYYYMMDD =
+               FUNCTION DATE-OF-INTEGER(WS-CALC-INTEGER-DATE)
+
+      * CURSOR: SELECT ... WHERE EXPIRY_DATE <= cutoff
+      *         AND CARD_STATUS = 'AC'
+
+      * Mark old card as expired
+       2300-UPDATE-OLD-CARD.
+           EXEC SQL
+               UPDATE TB_CARD_MASTER
+               SET CARD_STATUS = 'EX'
+               WHERE CARD_NUMBER = :HV-OLD-CARD-NUMBER
+           END-EXEC</code></pre>
+        </div>
+        <div class="java-side">
+            <div class="side-header">Java &mdash; CardService.java (lines 164-198)</div>
+            <pre><code>public Map&lt;String, Object&gt; renewCards(int cutoffDays) {
+    LocalDate cutoffDate =
+        LocalDate.now().plusDays(cutoffDays); // 60
+
+    List&lt;CardMaster&gt; expiringCards =
+        cardRepo.findCardsForRenewal("AC", cutoffDate);
+
+    for (CardMaster oldCard : expiringCards) {
+        // Generate new card (shared sequence counter)
+        int renewalSeq = sequenceCounter.getAndIncrement();
+        String newCardNumber =
+            LuhnUtil.generateCardNumber(renewalSeq);
+
+        // Copy all fields to new card
+        CardMaster newCard = new CardMaster();
+        newCard.setCardNumber(newCardNumber);
+        newCard.setCardType(oldCard.getCardType());
+        // ... copy all fields ...
+        newCard.setCardStatus("NW");
+        newCard.setExpiryDate(
+            LocalDate.now().plusYears(3));
+
+        // Mark old card as expired
+        oldCard.setCardStatus("EX");
+        cardRepo.save(oldCard);
+    }
+}</code></pre>
+        </div>
+    </div>
+    <div class="info-box success">
+        <strong>Renewal Logic Match:</strong> Both: (1) calculate cutoff as today+60 days, (2) find 'AC' cards with expiry &le; cutoff, (3) generate new Luhn card number,
+        (4) copy all fields to new card with status 'NW', (5) set new expiry to +3 years, (6) mark old card as 'EX'. COBOL uses INTEGER-OF-DATE arithmetic; Java uses <code>LocalDate.plusDays()</code>.
+    </div>
+</section>
+
+<!-- ═══════════════════════════════ DATA MAPPING ═══════════════════════════════ -->
+<section id="data-mapping">
+    <h2>5. Data Structure Mapping (Copybooks &rarr; JPA Entities)</h2>
+
+    <h3>5.1 CPYCRD01.cpy &rarr; CardMaster.java</h3>
+    <table>
+        <thead>
+            <tr><th>COBOL Copybook Field</th><th>PIC Clause</th><th>Java Entity Column</th><th>Java Type</th><th>Match</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>WS-CM-CARD-NUMBER</code></td><td>PIC X(16)</td><td><code>cardNumber</code></td><td>String(16) @Id</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-CARD-TYPE</code></td><td>PIC X(02)</td><td><code>cardType</code></td><td>String(2)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-ACCOUNT-NUMBER</code></td><td>PIC X(12)</td><td><code>accountNumber</code></td><td>String(12)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-CUSTOMER-ID</code></td><td>PIC X(10)</td><td><code>customerId</code></td><td>String(10)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-FIRST-NAME</code></td><td>PIC X(25)</td><td><code>firstName</code></td><td>String(25)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-LAST-NAME</code></td><td>PIC X(25)</td><td><code>lastName</code></td><td>String(25)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-ADDR-LINE1</code></td><td>PIC X(40)</td><td><code>addrLine1</code></td><td>String(40)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-ADDR-LINE2</code></td><td>PIC X(40)</td><td><code>addrLine2</code></td><td>String(40)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-CITY</code></td><td>PIC X(25)</td><td><code>city</code></td><td>String(25)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-STATE</code></td><td>PIC X(02)</td><td><code>state</code></td><td>String(2)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-ZIP-CODE</code></td><td>PIC X(10)</td><td><code>zipCode</code></td><td>String(10)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-CARD-STATUS</code></td><td>PIC X(02)</td><td><code>cardStatus</code></td><td>String(2)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-ISSUE-DATE</code></td><td>PIC X(10)</td><td><code>issueDate</code></td><td>LocalDate</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-EXPIRY-DATE</code></td><td>PIC X(10)</td><td><code>expiryDate</code></td><td>LocalDate</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-ACTIVATION-DATE</code></td><td>PIC X(10)</td><td><code>activationDate</code></td><td>LocalDate</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-LAST-USED-DATE</code></td><td>PIC X(10)</td><td><code>lastUsedDate</code></td><td>LocalDate</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-DAILY-LIMIT</code></td><td>PIC 9(09)V99</td><td><code>dailyLimit</code></td><td>BigDecimal(15,2)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-AVAILABLE-BALANCE</code></td><td>PIC 9(11)V99</td><td><code>availableBalance</code></td><td>BigDecimal(15,2)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-PIN-OFFSET</code></td><td>PIC X(04)</td><td><code>pinOffset</code></td><td>String(4)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-CVV-VALUE</code></td><td>PIC X(03)</td><td><code>cvvValue</code></td><td>String(3)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-BRANCH-CODE</code></td><td>PIC X(06)</td><td><code>branchCode</code></td><td>String(6)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-CREATED-TIMESTAMP</code></td><td>PIC X(26)</td><td><code>createdTimestamp</code></td><td>LocalDateTime</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-CM-UPDATED-TIMESTAMP</code></td><td>PIC X(26)</td><td><code>updatedTimestamp</code></td><td>LocalDateTime</td><td><span class="status-pass">SAME</span></td></tr>
+        </tbody>
+    </table>
+
+    <h3>5.2 CPYSTL01.cpy &rarr; SettlementTransaction.java</h3>
+    <table>
+        <thead>
+            <tr><th>COBOL Copybook Field</th><th>PIC Clause</th><th>Java Entity Column</th><th>Java Type</th><th>Match</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>WS-ST-SETTLE-ID</code></td><td>PIC X(20)</td><td><code>settleId</code></td><td>String(20) @Id</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-TXN-ID</code></td><td>PIC X(20)</td><td><code>txnId</code></td><td>String(20)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-CARD-NUMBER</code></td><td>PIC X(16)</td><td><code>cardNumber</code></td><td>String(16)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-ACCOUNT-NUMBER</code></td><td>PIC X(12)</td><td><code>accountNumber</code></td><td>String(12)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-TXN-TYPE</code></td><td>PIC X(02)</td><td><code>txnType</code></td><td>String(2)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-TXN-AMOUNT</code></td><td>PIC 9(11)V99</td><td><code>txnAmount</code></td><td>BigDecimal(15,2)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-TXN-DATE</code></td><td>PIC X(10)</td><td><code>txnDate</code></td><td>LocalDate</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-MERCHANT-ID</code></td><td>PIC X(15)</td><td><code>merchantId</code></td><td>String(15)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-MERCHANT-NAME</code></td><td>PIC X(40)</td><td><code>merchantName</code></td><td>String(40)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-ACQUIRER-ID</code></td><td>PIC X(11)</td><td><code>acquirerId</code></td><td>String(11)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-ISSUER-ID</code></td><td>PIC X(11)</td><td><code>issuerId</code></td><td>String(11)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-NETWORK-ID</code></td><td>PIC X(04)</td><td><code>networkId</code></td><td>String(4)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-INTERCHANGE-FEE</code></td><td>PIC 9(07)V99</td><td><code>interchangeFee</code></td><td>BigDecimal(15,2)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-SETTLE-STATUS</code></td><td>PIC X(02)</td><td><code>settleStatus</code></td><td>String(2)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-SETTLE-DATE</code></td><td>PIC X(10)</td><td><code>settleDate</code></td><td>LocalDate</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-BATCH-SEQ-NUM</code></td><td>PIC 9(06)</td><td><code>batchSeqNum</code></td><td>Integer</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-ST-CREATED-TIMESTAMP</code></td><td>PIC X(26)</td><td><code>createdTimestamp</code></td><td>LocalDateTime</td><td><span class="status-pass">SAME</span></td></tr>
+        </tbody>
+    </table>
+
+    <h3>5.3 CPYHIST1.cpy &rarr; CardStatusHistory.java</h3>
+    <table>
+        <thead>
+            <tr><th>COBOL Copybook Field</th><th>PIC Clause</th><th>Java Entity Column</th><th>Java Type</th><th>Match</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>WS-SH-CARD-NUMBER</code></td><td>PIC X(16)</td><td><code>cardNumber</code></td><td>String(16)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-SH-SEQ-NUM</code></td><td>PIC 9(06)</td><td><code>id</code></td><td>Long @GeneratedValue</td><td><span class="status-equiv">EQUIVALENT</span></td></tr>
+            <tr><td><code>WS-SH-PREVIOUS-STATUS</code></td><td>PIC X(02)</td><td><code>previousStatus</code></td><td>String(2)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-SH-NEW-STATUS</code></td><td>PIC X(02)</td><td><code>newStatus</code></td><td>String(2)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-SH-REASON-CODE</code></td><td>PIC X(04)</td><td><code>reasonCode</code></td><td>String(4)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-SH-REQUESTOR-ID</code></td><td>PIC X(10)</td><td><code>requestorId</code></td><td>String(10)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-SH-STATUS-DATE</code></td><td>PIC X(10)</td><td><code>statusDate</code></td><td>LocalDate</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>WS-SH-CREATED-TIMESTAMP</code></td><td>PIC X(26)</td><td><code>createdTimestamp</code></td><td>LocalDateTime</td><td><span class="status-pass">SAME</span></td></tr>
+        </tbody>
+    </table>
+
+    <h3>5.4 Storage Mapping</h3>
+    <table>
+        <thead>
+            <tr><th>Mainframe Storage</th><th>COBOL File Type</th><th>Java/Modern Equivalent</th><th>Match</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>TB_CARD_MASTER</code> (DB2)</td><td>DB2 Table with indexes</td><td><code>card_master</code> (PostgreSQL/H2) with JPA indexes</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>TB_CARD_STATUS_HISTORY</code> (DB2)</td><td>DB2 Table</td><td><code>card_status_history</code> (PostgreSQL/H2)</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>STLVSAM.dat</code> (VSAM KSDS)</td><td>Indexed Sequential</td><td><code>settlement_transaction</code> table with indexed PK</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>SUMVSAM.dat</code> (VSAM KSDS)</td><td>Indexed Sequential</td><td><code>settlement_summary</code> table with indexed PK</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td><code>CARDHIST.dat</code> (VSAM KSDS)</td><td>Indexed Sequential</td><td><code>card_status_history</code> table</td><td><span class="status-pass">SAME</span></td></tr>
+            <tr><td>Sequential input files (.dat)</td><td>Fixed-length records</td><td>REST API JSON payloads / in-memory lists</td><td><span class="status-equiv">EQUIVALENT</span></td></tr>
+            <tr><td>Report output files (.txt)</td><td>Print files (FA)</td><td>JSON API responses + React UI rendering</td><td><span class="status-equiv">EQUIVALENT</span></td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- ═══════════════════════════════ UI MAPPING ═══════════════════════════════ -->
+<section id="ui-mapping">
+    <h2>6. UI Mapping (CICS/BMS 3270 &rarr; React 18)</h2>
+
+    <table>
+        <thead>
+            <tr><th>BMS Screen</th><th>COBOL Program</th><th>React Component</th><th>Functionality</th><th>Match</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>PISCR01</code><br>(Card Inquiry)</td>
+                <td><code>PIONL100.cbl</code></td>
+                <td><code>CardList.tsx</code><br><code>CardDetail.tsx</code></td>
+                <td>Search by card number, display full card details, status badges, formatted currency</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td><code>PISCR02</code><br>(Card Update)</td>
+                <td><code>PIONL200.cbl</code></td>
+                <td><code>CardDetail.tsx</code><br>(edit mode)</td>
+                <td>Two-phase: lookup then edit. Update address, limits. Form validation.</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>&mdash; (batch input)</td>
+                <td><code>PICRD100.cbl</code></td>
+                <td><code>CardIssuance.tsx</code></td>
+                <td>Card issuance form with all fields, Luhn-validated output</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>&mdash; (batch input)</td>
+                <td><code>PICRD200.cbl</code></td>
+                <td><code>CardActivation.tsx</code></td>
+                <td>Activation form with card selection, PIN offset entry</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>&mdash; (batch input)</td>
+                <td><code>PICRD300.cbl</code></td>
+                <td><code>CardStatus.tsx</code></td>
+                <td>Status update with action code selection, transition validation</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>&mdash; (batch output)</td>
+                <td><code>PICRD400.cbl</code></td>
+                <td><code>CardRenewal.tsx</code></td>
+                <td>Renewal trigger with cutoff days parameter, old&rarr;new card display</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>&mdash; (JCL output)</td>
+                <td><code>STLMT100-400</code></td>
+                <td><code>Settlement.tsx</code><br><code>SettlementReports.tsx</code></td>
+                <td>Settlement pipeline dashboard, network breakdown, CSV download</td>
+                <td><span class="status-pass">SAME</span></td>
+            </tr>
+            <tr>
+                <td>&mdash; (new)</td>
+                <td>&mdash;</td>
+                <td><code>Dashboard.tsx</code></td>
+                <td>Overview dashboard with card counts, charts, recent activity (enhancement over mainframe)</td>
+                <td><span class="status-equiv">ENHANCED</span></td>
+            </tr>
+            <tr>
+                <td>&mdash; (new)</td>
+                <td>&mdash;</td>
+                <td><code>BatchPipeline.tsx</code></td>
+                <td>Batch job trigger UI (replaces JCL submit &mdash; same jobs, modern interface)</td>
+                <td><span class="status-equiv">ENHANCED</span></td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- ═══════════════════════════════ TECH STACK MAPPING ═══════════════════════════════ -->
+<section id="tech-stack">
+    <h2>7. Technology Stack Mapping</h2>
+
+    <table>
+        <thead>
+            <tr><th>Mainframe Technology</th><th>Purpose</th><th>Modern Equivalent</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>COBOL Batch Programs</td>
+                <td>Business logic processing</td>
+                <td>Java 21 + Spring Boot 3 Services</td>
+                <td><span class="status-pass">MIGRATED</span></td>
+            </tr>
+            <tr>
+                <td>DB2 for z/OS</td>
+                <td>Relational database (card master, history)</td>
+                <td>PostgreSQL 16 (prod) / H2 (local dev)</td>
+                <td><span class="status-pass">MIGRATED</span></td>
+            </tr>
+            <tr>
+                <td>VSAM KSDS</td>
+                <td>Indexed key-value file storage</td>
+                <td>PostgreSQL tables with indexed PKs</td>
+                <td><span class="status-pass">MIGRATED</span></td>
+            </tr>
+            <tr>
+                <td>CICS / BMS (3270)</td>
+                <td>Online transaction processing + green screens</td>
+                <td>React 18 + TypeScript + REST APIs</td>
+                <td><span class="status-pass">MIGRATED</span></td>
+            </tr>
+            <tr>
+                <td>JCL Batch Jobs</td>
+                <td>Job scheduling and step execution</td>
+                <td>Spring Batch Tasklets + REST trigger</td>
+                <td><span class="status-pass">MIGRATED</span></td>
+            </tr>
+            <tr>
+                <td>DFSORT</td>
+                <td>File sorting utility</td>
+                <td>SQL ORDER BY / Java Streams sort</td>
+                <td><span class="status-pass">MIGRATED</span></td>
+            </tr>
+            <tr>
+                <td>Copybooks (.cpy)</td>
+                <td>Shared data record layouts</td>
+                <td>JPA Entity classes with @Column annotations</td>
+                <td><span class="status-pass">MIGRATED</span></td>
+            </tr>
+            <tr>
+                <td>SAS Analytics Input</td>
+                <td>CSV feed for analytics/reporting</td>
+                <td>CSV export via REST API + React download</td>
+                <td><span class="status-pass">MIGRATED</span></td>
+            </tr>
+            <tr>
+                <td>Easytrieve Reports</td>
+                <td>Formatted report generation</td>
+                <td>JSON API + React report rendering</td>
+                <td><span class="status-equiv">EQUIVALENT</span></td>
+            </tr>
+            <tr>
+                <td>CA7 Scheduling</td>
+                <td>Job dependency and scheduling</td>
+                <td>Spring Batch job orchestration</td>
+                <td><span class="status-equiv">EQUIVALENT</span></td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- ═══════════════════════════════ GAPS & NOTES ═══════════════════════════════ -->
+<section id="gaps">
+    <h2>8. Gaps, Equivalences &amp; Notes</h2>
+
+    <h3>Functional Equivalences (not gaps)</h3>
+    <div class="info-box info">
+        These are <strong>not missing functionality</strong> &mdash; they are architectural differences where the modern implementation achieves the same outcome through a different mechanism.
+    </div>
+
+    <table>
+        <thead>
+            <tr><th>Item</th><th>COBOL Way</th><th>Java Way</th><th>Same Output?</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>STLSORT</code> (sorting)</td>
+                <td>Separate DFSORT program to sort VSAM to sequential</td>
+                <td>SQL <code>ORDER BY txn_id</code> in repository query</td>
+                <td>Yes &mdash; data arrives sorted for matching</td>
+            </tr>
+            <tr>
+                <td>Report output format</td>
+                <td>Fixed-width 133-char print lines with ASA carriage control</td>
+                <td>JSON API response rendered as HTML tables in React</td>
+                <td>Yes &mdash; same data fields, modern presentation</td>
+            </tr>
+            <tr>
+                <td>File I/O (sequential input)</td>
+                <td>Fixed-length record files read sequentially</td>
+                <td>REST API with JSON payloads</td>
+                <td>Yes &mdash; same data, different transport</td>
+            </tr>
+            <tr>
+                <td>Error handling</td>
+                <td>SQLCODE evaluation + error files + return codes</td>
+                <td>Exception handling + HTTP status codes + error responses</td>
+                <td>Yes &mdash; same error conditions caught and reported</td>
+            </tr>
+            <tr>
+                <td>Commit strategy</td>
+                <td>EXEC SQL COMMIT at end of job (or every 100 records)</td>
+                <td>Spring @Transactional (per-API-call commit)</td>
+                <td>Yes &mdash; data integrity maintained</td>
+            </tr>
+            <tr>
+                <td>History sequence key</td>
+                <td>Composite key: CARD_NUMBER + SEQ_NUM (PIC 9(06))</td>
+                <td>Auto-generated Long @Id (database sequence)</td>
+                <td>Yes &mdash; unique history records, just different key strategy</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Infrastructure Items (not core business logic)</h3>
+    <div class="info-box warn">
+        These are <strong>infrastructure/tooling items</strong> from the migration plan that are not part of the core business logic. They can be added as separate tasks without affecting the functional equivalence of the migration.
+    </div>
+
+    <table>
+        <thead>
+            <tr><th>Item</th><th>Planned</th><th>Current State</th><th>Impact on Functionality</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Apache Airflow DAGs</td>
+                <td>Replace CA7 scheduling</td>
+                <td>Spring Batch handles job orchestration; REST API triggers batch jobs</td>
+                <td>None &mdash; jobs run the same logic, just triggered differently</td>
+            </tr>
+            <tr>
+                <td>JasperReports / Apache POI</td>
+                <td>PDF/Excel formatted reports</td>
+                <td>JSON API + React UI rendering + CSV download</td>
+                <td>None &mdash; same data, output format is presentational</td>
+            </tr>
+            <tr>
+                <td>Python pandas / Jupyter</td>
+                <td>Replace SAS analytics</td>
+                <td>CSV feed is compatible with pandas import; analytics is downstream</td>
+                <td>None &mdash; CSV feed exists, analytics is a consumer</td>
+            </tr>
+            <tr>
+                <td>Spring Security + JWT</td>
+                <td>API authentication</td>
+                <td>Not yet implemented (POC/demo scope)</td>
+                <td>None &mdash; security is non-functional, doesn't affect business logic</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Verification Scope</h3>
+    <div class="info-box warn">
+        <strong>Evidence boundary:</strong> This report combines static source mapping, code review, successful builds, and five focused Java parity tests.
+        The repository does not yet contain an automated harness that compiles the COBOL programs and executes identical fixture inputs against both COBOL and Java.
+        Therefore, claims in this report apply to implementation-level parity of the documented rules, not exhaustive runtime equivalence for every possible input.
+    </div>
+
+    <h3>Status Code Note</h3>
+    <div class="info-box info">
+        <strong>IN (Inactive) Status:</strong> The COBOL copybook <code>CPYCRD01.cpy</code> defines an 'IN' (Inactive) status value at line 30.
+        However, none of the actual COBOL programs (PICRD100-400) implement an AC&rarr;IN or IN&rarr;AC transition &mdash; this status was defined but unused in the POC.
+        <code>HL</code> is a PICRD300 action code (<code>88 WS-STS-ACT-HOTLIST VALUE 'HL'</code>), but the COBOL program stores <code>BL</code> as the new status.
+        The Java service and offline React fallback now preserve that behavior.
+    </div>
+</section>
+
+<!-- ═══════════════════════════════ FINAL VERDICT ═══════════════════════════════ -->
+<section>
+    <h2>9. Final Verdict</h2>
+
+    <div class="summary-grid">
+        <div class="summary-card highlight">
+            <div class="number">13/13</div>
+            <div class="label">Programs Migrated</div>
+        </div>
+        <div class="summary-card highlight">
+            <div class="number">10/10</div>
+            <div class="label">Business Rules Preserved</div>
+        </div>
+        <div class="summary-card highlight">
+            <div class="number">23/23</div>
+            <div class="label">Card Master Fields Mapped</div>
+        </div>
+        <div class="summary-card highlight">
+            <div class="number">17/17</div>
+            <div class="label">Settlement Fields Mapped</div>
+        </div>
+    </div>
+
+    <div class="info-box success">
+        <strong>VERDICT: CORE SAME-TO-SAME IMPLEMENTATION PARITY CONFIRMED</strong><br><br>
+        Every COBOL program in scope has a direct modern implementation mapping. The Luhn algorithm preserves the BIN/sequence/check-digit rule.
+        The status transition matrix now matches PICRD300, including HL action &rarr; BL status. STLMT100 field and network validation is preserved.
+        The O(n) sequential matching structure, 1.75% interchange fee, and 60-day renewal logic are directly represented in Java.
+        All business fields from the card and settlement copybooks are mapped to typed JPA entities.<br><br>
+        <strong>Five focused parity tests pass. Exhaustive same-input/same-output certification requires the future COBOL/Java differential harness described above.</strong>
+    </div>
+</section>
+
+</div><!-- /container -->
+
+<footer>
+    <p><strong>Migration Proof Report</strong> &mdash; Wells Fargo Payments Division</p>
+    <p>COBOL Mainframe &rarr; Java 21 + Spring Boot 3 + React 18 + PostgreSQL 16</p>
+    <p>PR: <a href="https://github.com/sudhasrinivaspallam/MainFramePOC/pull/1" target="_blank">github.com/sudhasrinivaspallam/MainFramePOC/pull/1</a></p>
+    <p style="margin-top:12px;opacity:0.6;">Updated July 2026 by Devin AI</p>
+</footer>
+
+<script>
+    const sections = document.querySelectorAll('section');
+    const navLinks = document.querySelectorAll('.nav-bar a');
+    window.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (scrollY >= sectionTop - 100) {
+                current = section.getAttribute('id');
+            }
+        });
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === '#' + current) {
+                link.classList.add('active');
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
