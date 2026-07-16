@@ -10,7 +10,7 @@ export default function AccessDeniedPage() {
       <span className="state-icon">
         <LockKeyhole size={30} aria-hidden="true" />
       </span>
-      <h1>Access restricted</h1>
+      <h1>Access denied</h1>
       <p>
         Your current role does not have permission to access
         {from ? ` ${from}` : " this workspace"}.
